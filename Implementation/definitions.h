@@ -12,7 +12,7 @@
 
 
 
-#define BOARD_DIMENSION 13
+#define BOARD_DIMENSION 19
 #define KOMI_VALUE 6.5
 
 // core declarations
