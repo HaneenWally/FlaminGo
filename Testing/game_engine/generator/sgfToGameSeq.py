@@ -28,7 +28,6 @@ b_player = root_node.get("PB")
 w_player = root_node.get("PW")
 
 bcurrent = boards.Board(19)
-
 board = np.full((board_size, board_size), '.')
 
 states = ['19\n']

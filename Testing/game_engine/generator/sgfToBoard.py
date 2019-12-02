@@ -1,12 +1,14 @@
-from sgfmill import sgf
+from sgfmill import sgf, boards, ascii_boards
 import argparse
 import numpy as np
 import os
+import re
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
     '-f', help='Enter filepath with .sgf extention', required=True, default=None)
-parser.add_argument('-d', help='Enter baord destination path',
+parser.add_argument('-d', help='Enter output destination path',
                     required=True, default=None)
 args = parser.parse_args()
 filename = args.f
@@ -17,29 +19,49 @@ assert(".sgf" in filename)
 with open(filename, "rb") as f:
     game = sgf.Sgf_game.from_bytes(f.read())
 
+    assert(".sgf" in filename)
+
+with open(filename, "rb") as f:
+    game = sgf.Sgf_game.from_bytes(f.read())
+
 winner = game.get_winner()
 board_size = game.get_size()
 root_node = game.get_root()
 b_player = root_node.get("PB")
 w_player = root_node.get("PW")
 
+winner = game.get_winner()
+board_size = game.get_size()
+assert board_size == 19
+
+root_node = game.get_root()
+b_player = root_node.get("PB")
+w_player = root_node.get("PW")
+
+bcurrent = boards.Board(19)
 board = np.full((board_size, board_size), '.')
 
-board_seg = []
+states = ['19\n']
 for i, node in enumerate(game.get_main_sequence()):
-    stone, pos = node.get_move()
-    if(pos):
-        board[pos] = stone
-    new_state = np.hstack((board, np.full((board_size, 1), ' ')))
-    # for state in board_seg:
-    #     if((state == new_state).all()):
-    #         print("aaaaaaaaaaaaaaaa")
+    move = node.get_move()
+    if (move[1] is not None):
+        bcurrent.play(move[1][0], move[1][1], move[0])
+        player, stonePos = node.get_move()
+        # states.append(f'\n{player} {18-stonePos[0]} {stonePos[1]}\n')
+        state = ascii_boards.render_board(bcurrent)
+        state = ''.join(re.findall('[.o#][ \n]', state))
+        state = re.sub('#', 'b', state)
+        state = re.sub('o', 'w', state)
+        states.append(state)
 
-    print(stone, pos)
-    board_seg.append(new_state)
+del states[1:-1]
 
 
-np.savetxt("ko.txt", np.hstack(tuple(board_seg)), fmt="%s")
+with open(os.path.join(destination, os.path.basename(filename).replace('sgf', 'txt')), 'w') as f:
+    f.writelines(states)
+
+
+# np.savetxt(filename.split('.')[0], np.hstack(tuple(board_seg)), fmt="%s")
 
 # board_size = [""]*board_size
 # board_size[0] = str(board_size)

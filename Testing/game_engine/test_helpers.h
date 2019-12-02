@@ -14,7 +14,7 @@ using namespace std;
 namespace tst {
 
 struct Play {
-    char player;
+    CellState player;
     int row, col;
 };
 
@@ -38,7 +38,7 @@ void readBoard(ifstream &in, Board &board) {
     for (auto &&v : board) {
         for (auto &&c : v) {
             in >> cell;
-            if (cell == 'e')
+            if (cell == '.')
                 c = EMPTY;
             else if (cell == 'b')
                 c = BLACK;
@@ -81,7 +81,9 @@ Game parse_game(string game_file = "./games/1377954818019999562.txt") {
     in >> game.board_size;
 
     Play play;
-    while (in >> play.player) {
+    char player;
+    while (in >> player) {
+        play.player = (player == 'w') ? WHITE : BLACK;
         in >> play.row >> play.col;
 
         Board board = vector<vector<CellState>>(game.board_size, vector<CellState>(game.board_size, EMPTY));
@@ -94,6 +96,7 @@ Game parse_game(string game_file = "./games/1377954818019999562.txt") {
     in.close();
     return game;
 }
+
 vector<string> get_files(string path) {
     vector<string> files;
 
@@ -112,4 +115,16 @@ vector<string> get_files(string path) {
 }
 
 }  // namespace tst
+
+bool operator==(const State &s1, const State &s2) {
+    if (s1.size() != s2.size() || s1.size() == 0 || s1[0].size() != s2[0].size()) return false;
+    for (int i = 0; i < s1.size(); ++i) {
+        for (int j = 0; j < s2.size(); ++j) {
+            if (s1(i, j) != s2(i, j))
+                return false;
+        }
+    }
+    return true;
+}
+
 #endif  // MACRO

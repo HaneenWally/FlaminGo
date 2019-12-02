@@ -56,12 +56,14 @@ BOOST_AUTO_TEST_CASE(testing_with_one_stone_on_baord, *utf::tolerance(0.00001)) 
 
 BOOST_AUTO_TEST_CASE(testing_adding_captured_stones, *utf::tolerance(0.00001)) {
     GoEngine engine;
-    State state;
     int board_size = 19;
     int black_captured = 3;
     int white_captured = 9;
-    float required_white_score = 6.5 + black_captured;
-    int required_black_score = 0 + white_captured;
+    int required_black_score = 0 + black_captured;
+    float required_white_score = 6.5 + white_captured;
+    Board board = vector<vector<CellState>>(board_size, vector<CellState>(board_size, EMPTY));
+    State state(board, white_captured, black_captured);
+
     BOOST_REQUIRE(board_size == BOARD_DIMENSION);
 
     for (int i = 0; i < board_size; i++) {
@@ -69,13 +71,13 @@ BOOST_AUTO_TEST_CASE(testing_adding_captured_stones, *utf::tolerance(0.00001)) {
             state(i, j) = EMPTY;
         }
     }
+
     state(board_size / 2, board_size / 2) = WHITE;
     state(board_size / 2 + 1, board_size / 2 + 1) = BLACK;
     required_white_score++;
     required_black_score++;
 
-    Score s(white_captured, black_captured);
-    s = engine.computeScore(state);
+    Score s = engine.computeScore(state);
 
     BOOST_TEST(s.white == required_white_score, "white score should equal: " << required_white_score << ", given: " << s.white);
     BOOST_TEST(s.black == required_black_score, "black score should equal: " << required_black_score << ", given: " << s.black);

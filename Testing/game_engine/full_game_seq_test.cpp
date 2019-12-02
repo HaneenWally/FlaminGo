@@ -18,23 +18,30 @@ BOOST_AUTO_TEST_CASE(testing_fullgame_seq, *utf::tolerance(0.00001)) {
 
         BOOST_REQUIRE(game.board_size == BOARD_DIMENSION);
 
-        State curr;
-        // for (int i = 0; i < game.states.size(); i++) {
-        //     engine.processMove()
-        // }
+        for (int i = 0; i < game.board_size; i++) {
+            for (int j = 0; j < game.board_size; j++) {
+                state(i, j) = EMPTY;
+            }
+        }
 
-        // for (auto &&play : game.plays) {
-        //     cout << play.player << " " << play.row << " " << play.col << endl;
-        // }
+        for (int i = 0; i < game.plays.size(); i++) {
+            state.apply_action(Action(game.plays[i].player, game.plays[i].row, game.plays[i].col));
 
-        // for (auto &state : game.states) {
-        //     for (auto &r : state) {
-        //         for (auto &c : r) {
-        //             cout << c << ' ';
-        //         }
-        //     }
-        // }
-        break;
+            bool match = state == game.states[i];
+
+            BOOST_TEST(match, "Error:\n");
+            if (!match) {
+                cout << "board file" << game_file << " board_num:" << i + 1;
+
+                cout
+                    << "Required State:\n"
+                    << game.states[i] << endl;
+                cout << "Givem State:\n"
+                     << state << endl;
+
+                return;
+            }
+        }
     }
 }
 
