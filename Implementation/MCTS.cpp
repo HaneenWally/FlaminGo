@@ -108,8 +108,7 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 			prev_action = action;
 			if (engine.getRandomAction(action, &state, &prev_state,Switch(state.get_color()))) // TODO: interface correct and send missing params [DONE]
 			{
-				prev_state = state;
-				state.apply_action(action);
+				this->engine.applyValidAction(state, action);
 			}
 			else
 			{

@@ -1,6 +1,7 @@
 #pragma once
 #include "definitions.h"
 #include "Action.h"
+
 using namespace std;
 class State : public Board
 {
@@ -26,7 +27,7 @@ public:
 	void setCapturedStones(int white, int black);
 	// H&H
 											//void get_actions(vector<Action>&);      // Add all possible actions to the passed vector.         // CHANGED TO GAME ENGINE.
-	void apply_action(Action);              // apply certain action to this state.
+	// void apply_action(Action actionToApply, GoEngine engine);              // apply certain action to this state using the engine.
 	friend ostream& operator<<(ostream& os, const State& state);
 	void set_color(CellState col) { this->color = col; }
 	CellState get_color() { return color; }
