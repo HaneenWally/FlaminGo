@@ -46,10 +46,18 @@ enum Player
 };
 
 
-struct Score : public WhiteBlack
+struct Score
 {
-	Score(int whiteScore, int blackScore) : WhiteBlack(whiteScore + KOMI_VALUE, blackScore) {}
+	float white, black;
+	Score(float whiteScore, float blackScore){
+		init(whiteScore, blackScore);
+	}
+	Score(){
+		init(0,0);
+	}
 
+private:
+void init(float w, float b) {white = w + KOMI_VALUE; black = b;}
 };
 
 

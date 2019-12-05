@@ -11,6 +11,12 @@ Action::Action(CellState color) : p(-1, -1)
 {
 	this->player = color;
 }
+
+Action::Action(CellState color, Point _p) : p(_p)
+{
+	this->player = color;
+}
+
 Action::Action() : p(-1,-1)
 {}
 

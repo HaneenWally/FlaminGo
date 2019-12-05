@@ -361,6 +361,17 @@ bool GoEngine::getRandomAction(Action& result, const State* state, const State* 
 	return true;
 }
 
+void GoEngine::applyValidAction(State& state, Action action){
+	state += action;
+	removeCaptured(state, action.p, action.getColour());
+}
+
+bool GoEngine::applyAction(State& state, const State * prevState, Action action){
+	if (!isValidMove(&state, prevState, action)) return false;
+	applyValidAction(state, action);
+	return true;
+}
+
 GoEngine::~GoEngine()
 {
 }
