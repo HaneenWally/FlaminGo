@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(testing_fullgame_seq, *utf::tolerance(0.00001)) {
         }
 
         for (int i = 0; i < game.plays.size(); i++) {
-            state.apply_action(Action(game.plays[i].player, game.plays[i].row, game.plays[i].col));
+            engine.applyValidAction(state, Action(game.plays[i].player, game.plays[i].row, game.plays[i].col));
 
             bool match = state == game.states[i];
 
