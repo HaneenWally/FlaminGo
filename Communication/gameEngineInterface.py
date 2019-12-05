@@ -18,9 +18,8 @@ class doubleQueuePipe:
         return self.src.get()
 
     def clean(self):
-        self.src.close()
-        self.sink.close()
-        self.src, self.sink = multiprocessing.Queue(), multiprocessing.Queue()
+        pass
+        #self.src, self.sink = multiprocessing.Queue(), multiprocessing.Queue()
 
     def __del__(self):
         self.src.close()

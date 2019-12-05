@@ -39,10 +39,13 @@ if __name__ == '__main__':
     print("Commmunication statrted")
     msg = comm.recv()
 
+    i = 0
     while(1):
-        print(msg)
-        if(msg["type"] != "END" and msg["myturn"]):
-            a, b = input(f"{agentName} pick a move: ").split()
-            comm.send({"type": "MOVE", "move": {
-                      "type": "place", "point": {"row:": int(a), "column": int(b)}}})
+        # print(msg)
+        if(msg["type"] != "END"):
+            if(msg["myturn"]):
+                # a, b = input(f"{agentName} pick a move: ").split()
+                comm.send({"type": "MOVE", "move": {
+                    "type": "place", "point": {"row": i, "column": 3}}})
+        i += 2
         msg = comm.recv()
