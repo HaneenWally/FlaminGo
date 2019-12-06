@@ -28,7 +28,7 @@ class ServerInterface:
         else:
             await self.disconnect()  # if old connection needs clean up
             try:
-                self.connection = await websockets.connect(self.serverUri, ping_interval=1)
+                self.connection = await websockets.connect(self.serverUri, ping_interval=.5)
                 return True if self._isconnected else False
             except Exception as e:
                 print(f"Cannot connect to {self.serverUri}")

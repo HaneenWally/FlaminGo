@@ -1,15 +1,13 @@
 from serverInterface import ServerInterface as ServerConnection
 import asyncio
+import concurrent.futures
 import websockets
 import multiprocessing
 from time import sleep
+from helpers import *
 
 
 class Init:
-    def __init__(self):
-        # these variables are meant for debuging and handling special cases like (not yet known :) )
-        self.lasMsgToServer = self.lasMsgToGE = self.lasMsgFromServer = self.lasMsgFromGE = None
-
     async def handle(self, server, gameEngine, client):
         serverMsg = await server.receive()
         assert serverMsg["type"] in ["NAME", "END"]  # TODO
@@ -52,7 +50,8 @@ class Thinking:
             self.prevState = self
             return self
 
-        gameEngineMsg = gameEngine.fromGE()
+        gameEngineMsg = await blockingToAsync(gameEngine.fromGE)
+
         if(gameEngineMsg["type"] in ["MOVE"]):
             await server.send(gameEngineMsg)
             return WaitingMoveResponse()
