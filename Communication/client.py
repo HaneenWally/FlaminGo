@@ -5,6 +5,7 @@ import websockets
 import multiprocessing
 from time import sleep
 from helpers import *
+import logging
 
 
 class Init:
@@ -22,7 +23,7 @@ class Ready:
 
         if(serverMsg["type"] == "END"):
             gameEngine.toGE(serverMsg)
-            return Init()
+            return Ready()
 
         mycolor = serverMsg["color"]
         moveLog = serverMsg["configuration"]["moveLog"]
@@ -56,7 +57,7 @@ class Thinking:
             await server.send(gameEngineMsg)
             return WaitingMoveResponse()
         else:
-            print(
+            logging.warn(
                 f'Unexpected msg form game engine {gameEngineMsg["type"]}.. Return to READY_STATE')
             return Ready()
 
@@ -68,7 +69,7 @@ class WaitingMoveResponse:
 
         if(serverMsg["type"] == "END"):
             gameEngine.toGE(serverMsg)
-            return Init()
+            return Ready()
 
         if(serverMsg["type"] == "VALID"):
             return Idle()
@@ -83,7 +84,7 @@ class Idle:
 
         if(serverMsg["type"] == "END"):
             gameEngine.toGE(serverMsg)
-            return Init()
+            return Ready()
 
         if(serverMsg["type"] == "MOVE"):
             serverMsg["myturn"] = True  # to know it has to move
@@ -100,6 +101,8 @@ class Disconnected:
 
 class Client:
     def __init__(self, clientName):
+        logging.basicConfig(filename='client.log', filemode='w',
+                            format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
         self.clientName = clientName
         self.intialState = Disconnected()
         self.currState = self.intialState
@@ -116,10 +119,12 @@ class Client:
             else:
                 # this function recive only msg commands and discard heart beat
                 try:
-                    print(self.currState)
+                    logging.debug(
+                        f'Client curr state is {type(self.currState).__name__}')
                     self.currState = await self.currState.handle(server, gameEngine, self)
                 except Exception as e:
-                    print("EXEPCTION in client._commuincate ", e)
+                    logging.error(
+                        f"EXEPCTION: {e} in client._commuincate cause returing to intialstate")
                     await self._returnToIntial(server, gameEngine)
 
     def start(self, server, gameEngine):

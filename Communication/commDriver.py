@@ -36,12 +36,11 @@ if __name__ == '__main__':
     from random import randrange
     from time import sleep
     agentName = sys.argv[1]
-    comm = CommunicationDriver(sys.argv[1], "127.0.0.1:5000")
+    comm = CommunicationDriver(sys.argv[1], "127.0.0.1:8080")
     comm.start()
     print("Commmunication statrted")
     msg = comm.recv()
 
-    i = 0
     while(1):
         if(msg["type"] != "END"):
             # input("Press enter!!")
@@ -49,6 +48,5 @@ if __name__ == '__main__':
                 # a, b = input(f"{agentName} pick a move: ").split()
                 comm.send({"type": "MOVE", "move": {
                     "type": "place", "point": {"row": randrange(0, 19), "column": randrange(0, 19)}}})
-        i += 2
         msg = comm.recv()
         sleep(.5)
