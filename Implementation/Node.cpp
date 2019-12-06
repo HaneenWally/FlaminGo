@@ -52,7 +52,7 @@ Node* Node::add_child(const Action& new_action)
 	// Fill its action.
 	child->action = new_action;
 	// Change its state to the new state( old state + new action )
-	child->state.apply_action(new_action);
+	engine.applyValidAction(child->state, new_action);
 	// Now add it to the children list.
 	children.push_back(child);
 	return child;

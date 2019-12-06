@@ -8,6 +8,18 @@ State::State(const Board & m) : Board(m)
 	init();
 }
 
+State::State(const Board & m, int capturedByBlack, int capturedByWhite) : Board(m)
+{
+	init();
+	this->capturedStones.white = capturedByWhite;
+	this->capturedStones.black = capturedByBlack;
+}
+
+void State::setCapturedStones(int white, int black){
+	this->capturedStones.white = white;
+	this->capturedStones.black = black;
+}
+
 State::State() : Board(BOARD_DIMENSION, std::vector<CellState>(BOARD_DIMENSION, CellState::EMPTY))
 {
 	std::cout << "state constructed with empty state\n";
@@ -73,14 +85,10 @@ void State::init() {
 	this->capturedStones.black = 0;
 }
 
-void State::apply_action(Action action)             // apply certain action to this state.
-{
-	//cout << "The Action: " << action.p.x << " " << action.p.y << endl;
-	//cout << "SHOULD BE APPLIED " << action;
-	*this += action;
-	// when the state changes, the color is toggled.
-	this->color = Switch(this->color);
-}
+// void State::apply_action(Action action, GoEngine engine)             // apply certain action to this state.
+// {
+// 	engine.applyAction(*this, action);
+// }
 ostream& operator<<(ostream &out,const State& state)
 {
 	out << "The current Board:\n";
