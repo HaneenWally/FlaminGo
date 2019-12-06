@@ -36,7 +36,7 @@ def main():
             aiVsHuman(msg , guiConnection)
 
 
-def aiVsAi(msg , guiScoket , paused):
+def aiVsAi(msg , guiSocket , paused):
     ip = msg["msg"]["IP"]
     port = msg["msg"]["port"]
     # send to communication team ip and port to connect to server
@@ -63,12 +63,12 @@ def aiVsAi(msg , guiScoket , paused):
     continuePlaying = True
     gamePaused = False
     while(continuePlaying):
-        continuePlaying , gamePaused = playOnlineGame(myColor , myTurn , guiScoket)
+        continuePlaying , gamePaused = playOnlineGame(myColor , myTurn , guiSocket)
         myTurn = not myTurn
     return gamePaused
 
 
-def playOnlineGame(myColor , myTurn , guiScoket):
+def playOnlineGame(myColor , myTurn , guiSocket):
     if(myTurn):
         # get move from implementation
         gameEnd = True
@@ -121,7 +121,7 @@ def playOnlineGame(myColor , myTurn , guiScoket):
             move = {'type':ScoketmsgTypes.moveConfigrations.value , 'msg':{'color':myColor , 'x':x , 'y':y , 'countCaptured':countCaptured }}
             guiSocket.send(str.encode(json.dumps(move)))
             msg = recMsg(guiSocket ,True)
-            for i in range(countCapture):
+            for i in range(countCaptured):
                 remove = {'type':ScoketmsgTypes.remove.value , 'msg':{ 'x':captured[i][0] , 'y':captured[i][1] }}
                 guiSocket.send(str.encode(json.dumps(remove)))
                 msg = recMsg(guiSocket , True)
@@ -156,7 +156,7 @@ def aiVsHuman(msg , guiSocket):
 
     continuePlaying = True
     while(continuePlaying):
-        continuePlaying , myTurn = playGame(myColor , myTurn , guiScoket)
+        continuePlaying , myTurn = playGame(myColor , myTurn , guiSocket)
 
 
 def playGame(myColor , myTurn,guiSocket ):
@@ -182,12 +182,12 @@ def playGame(myColor , myTurn,guiSocket ):
             return not gameEnd , not myTurn
         else:
             end =  {'type':ScoketmsgTypes.gameEnd.value , 'msg':{'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}}
-            guiSocket.send(str.encode(json.dumps(move)))
+            guiSocket.send(str.encode(json.dumps(end)))
             msg = recMsg(guiSocket , False)
             return not gameEnd , not myTurn
 
     else:
-        msg = recMsg(guiScoket, False)
+        msg = recMsg(guiSocket, False)
         if(msg["type"] == ScoketmsgTypes.forfeit.value):
             return False
         elif(msg["type"] == ScoketmsgTypes.move.value):
@@ -208,10 +208,10 @@ def playGame(myColor , myTurn,guiSocket ):
                 # get captured stones locations if there are ones
                 captured = [[1,3]] # array or arrays containing x, y to be removed
                 countCaptured = len(captured)
-                end =  {'type':ScoketmsgTypes.ack.value , 'msg':{'valid':valid , 'reason':reason , 'countCapture':countCapture}}
+                end =  {'type':ScoketmsgTypes.ack.value , 'msg':{'valid':valid , 'reason':reason , 'countCaptured':countCaptured}}
                 guiSocket.send(str.encode(json.dumps(end)))
                 if(valid):
-                    for i in range(countCapture):
+                    for i in range(countCaptured):
                         remove = {'type':ScoketmsgTypes.remove.value , 'msg':{ 'x':x , 'y':y }}
                         guiSocket.send(str.encode(json.dumps(remove)))
                         msg = recMsg(guiSocket ,False)
