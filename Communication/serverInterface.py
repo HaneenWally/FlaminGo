@@ -32,6 +32,7 @@ class ServerInterface:
                 return True if self._isconnected else False
             except Exception as e:
                 print(f"Cannot connect to {self.serverUri}")
+                sleep(1)
                 return False
 
     async def send(self, msg):

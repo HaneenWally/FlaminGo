@@ -46,8 +46,7 @@ class Thinking:
 
     async def handle(self, server, gameEngine, client):
         if(self.prevState and isinstance(self.prevState, WaitingMoveResponse)):
-            gameEngine.toGE(
-                {"type": "INTERNAL", "ReThink": True, "myturn": True})
+            # gameEngine.toGE({"type": "INTERNAL", "ReThink": True, "myturn": True})
             self.prevState = self
             return self
 
@@ -72,8 +71,13 @@ class WaitingMoveResponse:
             return Ready()
 
         if(serverMsg["type"] == "VALID"):
+            # send to game engine vlaid or not valid
+            serverMsg["myturn"] = False
+            gameEngine.toGE(serverMsg)
             return Idle()
         else:
+            serverMsg["myturn"] = True
+            gameEngine.toGE(serverMsg)
             return Thinking(self)
 
 
@@ -119,7 +123,7 @@ class Client:
             else:
                 # this function recive only msg commands and discard heart beat
                 try:
-                    logging.debug(
+                    logging.info(
                         f'Client curr state is {type(self.currState).__name__}')
                     self.currState = await self.currState.handle(server, gameEngine, self)
                 except Exception as e:
