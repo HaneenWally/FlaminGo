@@ -37,8 +37,8 @@ def main():
 
 
 def aiVsAi(msg , guiScoket , paused):
-    ip = msg["IP"] ;
-    port = msg["port"]
+    ip = msg["msg"]["IP"]
+    port = msg["msg"]["port"]
     # send to communication team ip and port to connect to server
     # get initialboard and history and my color
     myColor = 'b'
@@ -131,15 +131,15 @@ def playOnlineGame(myColor , myTurn , guiScoket):
 def aiVsHuman(msg , guiSocket):
     ackMsg = {'type':ScoketmsgTypes.ack.value}
     guiSocket.send(str.encode(json.dumps(ackMsg)))
-    myColor= msg["myColor"] ;
+    myColor= msg["msg"]["myColor"] ;
     # maybe process on mycolor if they want it 0 or 1
     # send color to implementation team
-    initialCount = msg["initialCount"]
+    initialCount = msg["msg"]["initialCount"]
     blackCount , whiteCount = 0 , 0
     for i in range(initialCount):
         msg =recMsg(guiSocket , False)
         if(msg["type"] == ScoketmsgTypes.move.value):
-            color,x,y = msg["color"], msg["x"],msg["y"]
+            color,x,y = msg["msg"]["color"], msg["msg"]["x"],msg["msg"]["y"]
             if(color == 'b'):
                 blackCount+=1
             elif(color == 'w'):
@@ -191,7 +191,7 @@ def playGame(myColor , myTurn,guiSocket ):
         if(msg["type"] == ScoketmsgTypes.forfeit.value):
             return False
         elif(msg["type"] == ScoketmsgTypes.move.value):
-            color,x,y = msg["color"], msg["x"],msg["y"]
+            color,x,y = msg["msg"]["color"], msg["msg"]["x"],msg["msg"]["y"]
             # send move to implementation and wait if it's valid or not
             # and if it's valid it may end the game
             valid = True
