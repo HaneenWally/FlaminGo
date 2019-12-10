@@ -99,5 +99,11 @@ ostream& operator<<(ostream &out,const State& state)
 	out << "Last Color played: " << (state.color==WHITE? "WHITE" : "BLACK") <<"\n";
 	return out;
 }
+void State::clear(){
+	for(int i=0;i<BOARD_DIMENSION;++i)
+		for(int j = 0;j<BOARD_DIMENSION;++j)
+			(*this)[i][j] = CellState::EMPTY;
+	init();
+}
 
 State::~State() {}

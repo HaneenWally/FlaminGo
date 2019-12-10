@@ -1,7 +1,7 @@
 #pragma once
 #include "definitions.h"
 #include "Action.h"
-
+#include <vector>
 using namespace std;
 class State : public Board
 {
@@ -14,6 +14,7 @@ private:
 	CellState color;		// NOTE: color in state means the color which make that state. not the color which is ready to play.
 							// NOTE: the color of the state is totally useless for MCTS. It's needed to communicate with the engine.
 public:
+	vector<Point>last_captured_positions;
 	CapturedStones getCapturedstones() const;
 	State(const Board & m, int capturedByBlack, int capturedByWhite);
 	State(const Board & m);
@@ -30,6 +31,7 @@ public:
 	// void apply_action(Action actionToApply, GoEngine engine);              // apply certain action to this state using the engine.
 	friend ostream& operator<<(ostream& os, const State& state);
 	void set_color(CellState col) { this->color = col; }
+	void clear();
 	CellState get_color() { return color; }
 
 
