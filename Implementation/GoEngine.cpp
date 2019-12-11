@@ -273,6 +273,7 @@ int GoEngine::removeCapturedHelper(State &state, Point point, CellState color)
 		pointsToRemove.pop();
 		//std::cout << "this point is captured: " << currentPoint.x << ", " << currentPoint.y << "\n";
 		state(currentPoint.x, currentPoint.y) = EMPTY;
+		state.last_captured_positions.push_back(currentPoint);
 	}
 	return numCaptured;
 }
@@ -362,6 +363,7 @@ bool GoEngine::getRandomAction(Action& result, const State* state, const State* 
 }
 
 void GoEngine::applyValidAction(State& state, Action action){
+	state.last_captured_positions.clear();
 	state += action;
 	removeCaptured(state, action.p, action.getColour());
 }
