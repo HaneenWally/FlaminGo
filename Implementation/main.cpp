@@ -1,6 +1,5 @@
 #include "State.h"
 #include "GoEngine.h"
-#include <pthread.h>
 #include "MCTS.h"
 #include "definitions.h"
 
@@ -69,13 +68,47 @@ void get_best_move(int& x,int& y){
 }
 
 extern "C"
+void  getRemovedPositions(int * listState,int* move,int * removedStonesX,int * removedStonesY,int color){//move[0] row number move[1] column number 
+    State currentState;
+    for(int i=0;i<BOARD_DIMENSION;i++){
+        for(int j=0;j<BOARD_DIMENSION;j++){
+            if(listState[i+j*BOARD_DIMENSION]==1)
+                currentState[i][j]=BLACK;
+            else if(listState[BOARD_DIMENSION*BOARD_DIMENSION+ i+j*BOARD_DIMENSION]==1)
+                currentState[i][j]=WHITE;    
+        }
+    }
+    CellState currentMoveColour;
+
+    if(color==0){
+        currentMoveColour=BLACK;
+    }
+    else{
+        currentMoveColour=WHITE;
+    }
+    Action action(currentMoveColour,move[0],move[1]);
+    engine.applyValidAction(currentState,action);
+    
+    std::vector<Point> lastMovesCaptured=currentState.last_captured_positions;
+    
+    
+
+    for(int i=0;i<lastMovesCaptured.size();i++){
+        removedStonesX[lastMovesCaptured[i].x]=1;
+        removedStonesY[lastMovesCaptured[i].y]=1;
+    }
+
+}
+
+
+extern "C"
 void make_move(int* X,int* Y,int remaining_time){ //NOTE: the remaining time will be in seconds.
     // NOTE: the first element of the passed array is the move which the opponent did.
     best_x = best_y = ACK;
     // variables.
     State old_state;
     Action action(color[!positive], {X[0], Y[0]} );
-    pthread_t thread;
+    //pthread_t thread;
     // -----------------
 
     old_state = state;
@@ -83,7 +116,7 @@ void make_move(int* X,int* Y,int remaining_time){ //NOTE: the remaining time wil
     prev_state = old_state;
 
     State* ptr = &state;
-    int thread_ID = pthread_create(&thread, NULL, Carloh, ptr);
+    //int thread_ID = pthread_create(&thread, NULL, Carloh, ptr);
 
     // The part below, should be replaced with the captured positions.
     int random = 10;

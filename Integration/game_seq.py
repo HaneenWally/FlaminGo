@@ -2,7 +2,6 @@ import ctypes
 import numpy as np
 import glob
 
-
 class ImplemenationWrapper():
     # find the shared library, the path depends on the platform and Python version
     libfile = glob.glob('build/*/implementation*.so')[0]
@@ -33,10 +32,14 @@ class ImplemenationWrapper():
         self.impLib.mysum.restype = ctypes.c_int
         self.impLib.mysum.argtypes = [ctypes.c_int, 
                                 np.ctypeslib.ndpointer(dtype=np.int32)]
-        
+
+
+
+
+
     def fill_init_board(self, board, color): 
-        # color is 1 when we are black, else 0
-        # board is array of array, me is 1, other is -1, empty 0
+        # color is 1 when we are 0, else 0
+        # board is array of array, me is 1, other is -1, 0 0
         x = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
         y = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
         x1, y1 = np.where(board==1)
@@ -98,14 +101,69 @@ class ImplemenationWrapper():
         return x, y      
 
 
+def getRemovedStones(state,move,color):
+    
+    state=state.flatten()
+    removedX=np.zeros((19,1),dtype=np.int32)
+    removedY=np.zeros((19,1),dtype=np.int32)
+    move=[ord(move[0])-97,ord(move[1])-97]
+    ImplemenationWrapper.impLib.getRemovedPositions.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32), 
+                            np.ctypeslib.ndpointer(dtype=np.int32),
+                            np.ctypeslib.ndpointer(dtype=np.int32),
+                            np.ctypeslib.ndpointer(dtype=np.int32),
+                            ctypes.c_int]
+    ImplemenationWrapper.impLib.getRemovedPositions(state,move,removedX,removedY,color)
+    return removedX,removedY
+    
+
+
 if __name__ == "__main__":
     wrap = ImplemenationWrapper()
-    board = np.array([[1, 0, -1]*6 + [0]] *19)
+    board = np.zeros((13,13,2))
+    board[:,:,0] = [
+    0,0,0,0,1,1,1,1,0,0,0,0,0,
+    0,0,0,0,0,1,1,1,0,0,0,0,0,
+    0,0,0,0,0,0,1,1,1,0,0,0,0,
+    1,0,0,0,0,0,0,1,1,1,1,0,1,
+    1,1,0,0,0,0,0,0,1,1,1,1,1,
+    1,1,1,0,0,0,0,0,0,1,1,0,0,
+    0,0,0,1,1,0,0,1,0,1,0,0,0,
+    0,0,0,0,1,0,0,1,0,1,0,0,0,
+    0,0,0,0,1,1,1,1,1,0,1,0,0,
+    1,1,1,1,0,0,0,0,0,0,1,0,0,
+    1,1,0,1,0,0,0,0,0,0,1,0,0,
+    1,0,0,1,0,0,0,0,0,1,1,0,0,
+    0,0,0,1,0,0,0,0,0,0,1,0,0
+    ]
+    board[:,:,1]=[
+    0,0,0,0,0,0,0,0,1,1,0,0,0,
+    0,0,0,0,1,0,0,0,1,1,0,0,0,
+    0,0,0,0,1,1,0,0,0,1,1,1,1,
+    0,1,1,0,1,1,1,0,0,0,0,1,0,
+    0,0,1,1,1,1,1,1,0,0,0,0,0,
+    0,0,0,1,1,1,1,1,1,0,0,0,0,
+    0,0,0,0,0,1,1,0,1,0,0,0,0,
+    0,0,0,0,0,0,1,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,1,0,0,0,
+    0,0,0,0,1,1,1,1,1,1,0,0,0,
+    0,0,1,0,0,0,0,0,1,1,0,0,0,
+    0,1,1,0,0,0,0,0,1,0,0,0,0,
+    0,1,1,0,0,0,0,0,1,1,0,0,0
+    ]
+    move=[12,0]
+    color=0
+    removedX,removedY=getRemovedStones(board,move,color)
     
+
+
+
+    
+
+
+    '''for _ in range(10):
     wrap.fill_init_board(board, 1)
     wrap.fill_init_log([[1,2,'b'],[3,3,'w']], 'b', True)
-
-    for _ in range(10):
         wrap.play_tret(np.random.randint(0,19), np.random.randint(0,19), 300)
         x, y = wrap.get_play()
         print(x, y)
+    '''    

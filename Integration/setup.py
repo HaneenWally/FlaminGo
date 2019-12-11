@@ -1,10 +1,12 @@
 from setuptools import setup, Extension
+from glob import glob
+import os
 
+files = glob(os.path.join(os.path.abspath('../'), 'Implementation', '*.cpp'))
 # Compile *mysum.cpp* into a shared library 
 setup(
     #...
-    ext_modules=[Extension('implementation', ['../Implementation/main.cpp'],
-                include_dirs=['../Implementation'],
+    ext_modules=[Extension('implementation', files
                 )],
 )
 # setup(
