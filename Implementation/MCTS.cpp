@@ -7,7 +7,7 @@ MCTS::MCTS()
 	iterations = 0;
 	UCB1_C = sqrt(2);
 	max_iterations = 100;
-	max_millis = 100 * 1000;  // MUST BE CHANGED.
+	max_millis = 1 * 1000;  // MUST BE CHANGED.
 	simulation_depth = 100;
 }
 GoEngine MCTS::engine = GoEngine();

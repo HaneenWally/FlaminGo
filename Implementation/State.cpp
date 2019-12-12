@@ -96,7 +96,7 @@ ostream& operator<<(ostream &out,const State& state)
 	for(int i=0;i<BOARD_DIMENSION;++i)
 		for(int j = 0;j<BOARD_DIMENSION;++j)
 			out << arr[state(i,j)+1] << " \n"[j==BOARD_DIMENSION-1];
-	out << "Last Color played: " << (state.color==WHITE? "WHITE" : "BLACK") <<"\n";
+	//out << "Last Color played: " << (state.color==WHITE? "WHITE" : "BLACK") <<"\n";
 	return out;
 }
 void State::clear(){

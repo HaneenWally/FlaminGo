@@ -8,7 +8,7 @@
 #define pxy(m) m.p.x, m.p.y
 
 // const Point ADJ_OFFSETS[4] {Point(0, 1), Point(1, 0), Point(-1,0), Point(0,-1)};
-const Point ADJ_OFFSETS[4]{ Point(0, -1), Point(1, 0), Point(-1,0), Point(0,1) };
+const Point ADJ_OFFSETS[4] = { Point(0, -1), Point(1, 0), Point(-1,0), Point(0,1) };
 
 bool isOnBoard(Point p) {
 	return p.x < BOARD_DIMENSION && p.y < BOARD_DIMENSION && p.x >= 0 && p.y >= 0;
