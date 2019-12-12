@@ -364,7 +364,8 @@ bool GoEngine::getRandomAction(Action& result, const State* state, const State* 
 
 void GoEngine::applyValidAction(State& state, Action action){
 	state.last_captured_positions.clear();
-	state += action;
+	state += action; // place the stone on the board
+	state.set_color(Switch(state.get_color())); // toggle the color of the player who will play
 	removeCaptured(state, action.p, action.getColour());
 }
 
