@@ -5,7 +5,8 @@ from glob import glob
 cppFiles = glob(os.path.join(os.path.abspath('../'), 'Implementation', '*.cpp') )
 # Compile *mysum.cpp* into a shared library 
 module = Extension(name = 'implementation', 
-                sources = cppFiles
+                sources = cppFiles,
+                extra_compile_args = ['-std=c++11']
                 )
 setup(
     #...
