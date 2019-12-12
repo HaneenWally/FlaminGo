@@ -57,3 +57,7 @@ Node* Node::add_child(const Action& new_action)
 	children.push_back(child);
 	return child;
 }
+Node::~Node(){
+	for(auto ptr:children)
+		delete ptr;
+}
