@@ -94,7 +94,7 @@ Node* MCTS::Expand(Node* node)
 }
 
 //Simulate, Apply random actions till the game ends(win or lose)
-Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_action)
+Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_action, CellState AI_COLOR)
 {
 
 	if (!engine.isGoal(state, action, prev_action))
@@ -126,16 +126,9 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 	state.apply_action(action);
 	}
 	*/
-/*
 	CellState (*function_that_get_AI_COLOR)();
-
 	Score score = engine.computeScore(state);
-	bool isWhiteLarger = score.white > score.black;
-	bool iAmWhite = function_that_get_AI_COLOR() == WHITE;
-	return isWhiteLarger == iAmWhite ? WIN : LOSE;
-	*/
-	Score score = engine.computeScore(state);
-	return (score.white > score.black? WIN:LOSE);   // WARNING. we here assume that the AI_AGENT color is white.
+	return ( (score.white > score.black && AI_COLOR == WHITE) || (score.white < score.black && AI_COLOR == BLACK) ? WIN:LOSE);
 	// return state.evalute();     // WIN or LOSE.
 }
 
@@ -150,8 +143,9 @@ void MCTS::Propagate(Node* node, Result reward)
 	}
 }
 
-Action MCTS::run(State& current_state, int seed = 1)
+Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_color)
 {
+	this->max_millis = time_limit;
 	timer.init();
 
 	Node root_node(current_state, NULL);
@@ -173,7 +167,7 @@ Action MCTS::run(State& current_state, int seed = 1)
 		State state(node->get_state());
 
 		// 3. Simulate   // NOTE: the parent node will never = NULL, as the concept of expanding prevent that from happening.
-		Result reward = Simulate(state,node->get_parent()==NULL? state:node->get_parent()->get_state(), node->get_action(), node->get_parent()->get_action());
+		Result reward = Simulate(state,node->get_parent()==NULL? state:node->get_parent()->get_state(), node->get_action(), node->get_parent()->get_action(), AI_color);
         //puts("Got the reward successfully.");
 		//if(explored_states) explored_states->push_back(state);
 

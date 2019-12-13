@@ -33,7 +33,7 @@ extern "C"
 // the following function apply moves which came from the log.
 // after finishing this function, we have now the full initial state.
 void reach_initial(int* X,int* Y,int cur){
-
+    // cur = 1 if the first man to play is black.
     int idx = 0, x, y;
     current_color = cur;
     State old_state;

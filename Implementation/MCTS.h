@@ -34,9 +34,9 @@ public:
 	Node* get_most_visited_child(Node*);
 	Node* Select(Node*);
 	Node* Expand(Node*);
-	Result Simulate(State, State, Action, Action);
+	Result Simulate(State, State, Action, Action, CellState);
 	void Propagate(Node*, Result);
-	Action run(State&, int);
+	Action run(State&, int,int, CellState);
 
 	~MCTS();
 };

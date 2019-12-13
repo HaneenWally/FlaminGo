@@ -1,5 +1,7 @@
 #include "definitions.h"
 #include "GoEngine.h"
+#include <stdlib.h>
+#include <time.h> 
 
 #include<random>
 
@@ -350,12 +352,14 @@ void GoEngine::mergeNewVisited(TerritoryMat& territories, std::stack<Point> &new
 bool GoEngine::getRandomAction(Action& result, const State* state, const State* prevState, CellState playerColor) {
 	auto moves = getValidMoves(state, prevState, playerColor);
 	if (moves.empty()) return false;
-
+	srand(time(NULL));
 	// rand
+	/*
 	std::random_device dev;
 	std::mt19937 rng(dev());
 	std::uniform_int_distribution<std::mt19937::result_type> distribution(0, moves.size()); // distribution in range [1, 6]
-	auto sample = distribution(rng);
+	*/
+	int sample = rand();
 	sample%=moves.size();
     //cout << moves[sample];
 	result = moves[sample];
