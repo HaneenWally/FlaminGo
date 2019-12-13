@@ -1,6 +1,5 @@
 #include "State.h"
 #include "GoEngine.h"
-#include <pthread.h>
 #include "MCTS.h"
 #include "definitions.h"
 
@@ -11,7 +10,6 @@ Action current, prev_action(CellState::EMPTY, Point(0,0));
 CellState color[] = {WHITE, BLACK};
 int positive, best_x, best_y, current_color;
 GoEngine engine;
-pthread_t Thread;
 //------------------------------------------
 extern "C"
 // This function will take 2 arrays to fill the board with initial value.
@@ -71,27 +69,13 @@ void change_borad(int x,int y,int turn){
     
 }
 
-void* Carloh(void* ptr){
-    State state = *( (State *) ptr);
+extern "C"
+void make_move(int* X,int* Y, int remaining_time){ 
+    best_x = best_y = ACK;
     MCTS MC;
     // puts("running MCTS..");
 	Action act = MC.run(state,1);
-    best_x = act.p.x;
-    best_y = act.p.y;
-    // puts("MCTS done. Best action found.");
-}
-
-extern "C"
-void make_move(int remaining_time){ 
-    best_x = best_y = ACK;
-    State* ptr = &state;
-    int thread_ID = pthread_create(&Thread, NULL, Carloh, ptr);
-}
-
-
-extern "C"
-void get_best_move(int* X,int* Y){
-    pthread_join(Thread, NULL);
+    best_x = act.p.x; best_y = act.p.y;
     X[0] = best_x; Y[0] = best_y;
     change_borad(best_x,best_y,positive);
     int idx = 1; // should start from 1.
@@ -99,6 +83,7 @@ void get_best_move(int* X,int* Y){
         X[idx] = p.x, Y[idx] = p.y,idx++;
     X[idx] = Y[idx] = ACK;
 }
+
 
 bool valid(int x,int y){
     Point p(x,y);
@@ -118,7 +103,6 @@ int opponent_move(int* X,int* Y,int remaining_time){
     for(Point p:state.last_captured_positions)
         X[idx] = p.x, Y[idx] = p.y,idx++;
     X[idx] = Y[idx] = ACK;
-    make_move(remaining_time);
     return 1;
 }
 

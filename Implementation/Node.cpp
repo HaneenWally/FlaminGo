@@ -1,6 +1,9 @@
 #include "definitions.h"
 #include "Node.h"
 #include "assert.h"
+#include <stdlib.h>
+#include <time.h> 
+
 Node::Node(State& state, Node* parent = NULL) :
 	state(state),
 	action(),
@@ -17,7 +20,7 @@ Node* Node::expand()
 {
 	// First check if this Node is fully expanded or not.
 	if (is_fully_expanded()) return NULL;
-
+	srand(time(NULL));
 	// Check if this is the first expansion.
 	if (children.empty()) {
 
