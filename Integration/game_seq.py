@@ -1,7 +1,7 @@
 import ctypes
 import numpy as np
 import glob
-
+from threading import Thread
 
 class ImplemenationWrapper():
     # find the shared library, the path depends on the platform and Python version
@@ -25,10 +25,13 @@ class ImplemenationWrapper():
         self.impLib.AI_score.argtypes = [ctypes.c_int]
         self.impLib.AI_score.restype = ctypes.c_int 
 
-        self.impLib.make_move.argtypes = [ctypes.c_int]
+        self.impLib.make_move.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32), 
+                                    np.ctypeslib.ndpointer(dtype=np.int32), 
+                                    ctypes.c_int]
+        # self.impLib.make_move.argtypes = [ctypes.c_int]
         
-        self.impLib.get_best_move.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32),
-                                            np.ctypeslib.ndpointer(dtype=np.int32)]
+        # self.impLib.get_best_move.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32),
+        #                                     np.ctypeslib.ndpointer(dtype=np.int32)]
         
         self.impLib.set_color.argtypes = [ctypes.c_int]
         
@@ -43,6 +46,9 @@ class ImplemenationWrapper():
         # self.impLib.mysum.restype = ctypes.c_int
         # self.impLib.mysum.argtypes = [ctypes.c_int, 
         #                         np.ctypeslib.ndpointer(dtype=np.int32)]
+        self.x = self.ACK
+        self.y = self.ACK
+        self.captured = []
         
     def fill_init_board(self, board, color, number_of_w_captures, number_of_b_captures): 
         # color is 1 when we are black, else 0
@@ -61,7 +67,7 @@ class ImplemenationWrapper():
         self.impLib.set_color(color)
         self.impLib.fill_initial(x,y, number_of_w_captures, number_of_b_captures)
         
-    def fill_init_log(self, logs, myColor, is_me_first_play_in_log): 
+    def fill_init_log(self, logs): 
         # the log in shape of array of x,y,color if the play is pass the x,y == -1, -1
         x_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
         y_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
@@ -71,9 +77,9 @@ class ImplemenationWrapper():
         #     elif color == myColor: x_list[i], y_list[i] = x + 1, y + 1
         #     else: x_list[i], y_list[i] = - (x + 1), -(y + 1)
         for i, (x,y,_) in enumerate(logs): x_list[i], y_list[i] = x,y
-        x_list[i] = self.ACK; y_list[i] = self.ACK
-
-        self.impLib.reach_initial(x_list, y_list, int(bool(is_me_first_play_in_log)))
+        x_list[i+1] = self.ACK; y_list[i+1] = self.ACK
+        # color of the first player of the log, if black = 1
+        self.impLib.reach_initial(x_list, y_list, int(bool(logs[0][2] == 'b')))
 
         board = np.zeros((19,19))
         for x, y in zip(x_list, y_list): 
@@ -99,8 +105,18 @@ class ImplemenationWrapper():
         else:
             return is_valid, []
 
-    def init_my_move(self, remaningTime):
-        self.impLib.make_move(int(remaningTime))
+    def my_move(self, remaningTime):
+        self.x = self.ACK
+        self.y = self.ACK
+        self.captured = []
+        x_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
+        y_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
+        self.impLib.make_move(x_list, y_list, int(remaningTime))
+        self.x, self.y = x_list[0], y_list[0]
+        self.captured = self.__get_captured(x_list[1:], y_list[1:])
+        # -1 and -1 is pass move
+        return self.x, self.y, self.captured
+
 
     def __get_captured(self, x_list, y_list):
         captured = []
@@ -115,30 +131,20 @@ class ImplemenationWrapper():
         whiteScore = self.impLib.AI_score(0)
         return blackScore, whiteScore
 
-    def get_play(self):
-        # get the best play after calling one of the opponent move or 
-        x_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
-        y_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
-        self.impLib.get_best_move(x_list, y_list)
-        x, y = x_list[0], y_list[0]
-        # -1 and -1 is pass move
-        return x, y, self.__get_captured(x_list[1:], y_list[1:])
-
-
     def game_end(self):
         return self.impLib.is_done()
 
 if __name__ == "__main__":
     print('python say: hello')
     wrap = ImplemenationWrapper()
-    board = np.array([[1, 0, -1]*6 + [1]] *19)
+    board = np.array([[1, 0, 0]*5 + [1] + [0]] *19)
     
     print('python say: fill_init_board')
     wrap.fill_init_board(board, 1, 3, 4)
 
     # print(wrap.game_end())
     print('python say: fill_init_log')
-    board = wrap.fill_init_log([[1,2,'b'],[3,3,'w']], 'b', True)
+    board = wrap.fill_init_log([[1,2,'b'],[3,5,'w']])
 
     for _ in range(10):
         print('python say: opponent_move')
@@ -146,9 +152,13 @@ if __name__ == "__main__":
         captured = wrap.opponent_move(x,y, 300)
         print('python say: opponent play is, ', x, y)
         print('python say: get_play')
-        x, y, captured = wrap.get_play()
+        t = Thread(target= wrap.my_move, args=(10,))
+        t.start()
+
+        t.join()
+        assert wrap.x != wrap.ACK
+        print('python say: play is, ', wrap.x, wrap.y, wrap.captured)
         print('python say: score = ', wrap.get_score())
-        print('python say: play is, ', x, y)
         print('***********************************')
 
     
@@ -159,11 +169,16 @@ if __name__ == "__main__":
     wrap.fill_init_log([[1,2,'b'],[3,3,'w']], 'b', True)
     print('**********************************************************************')
     print('python say: init_my_move')
-    wrap.init_my_move(19)
     for _ in range(10):
         print('python say: get_play')
-        x, y, captured = wrap.get_play()
-        print('python say: play is, ', x, y)
+        t = Thread(target= wrap.my_move, args=(10,))
+        t.start()
+
+        t.join()
+        assert wrap.x != wrap.ACK
+        print('python say: play is, ', wrap.x, wrap.y, wrap.captured)
+
+        # print('python say: play is, ', x, y)
         print('python say: opponent_move')
         x,y = np.random.randint(0,19), np.random.randint(0,19)
         captured = wrap.opponent_move(x,y, 300)
