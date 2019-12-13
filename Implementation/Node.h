@@ -25,6 +25,7 @@ private:
 public:
 
 	Node(State&, Node*);
+	~Node();
 	Node* expand();                                 //adding a single child to this Node
 	void update(Result);
 	//--------------
