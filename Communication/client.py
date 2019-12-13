@@ -45,6 +45,17 @@ class Thinking:
         self.prevState = prevState
 
     async def handle(self, server, gameEngine, client):
+        unexcpectedMsg = await server.receiveSync(timeout=.1)
+        if(unexcpectedMsg):
+            if(unexcpectedMsg["type"] == "END"):
+                gameEngine.toGE(serverMsg)
+                return Ready()
+            else:
+                serverMsg["type"] = "END"
+                serverMsg["reason"] = "error"
+                serverMsg["winner"] = "."
+                gameEngine.toGE(serverMsg)
+
         if(self.prevState and isinstance(self.prevState, WaitingMoveResponse)):
             # gameEngine.toGE({"type": "INTERNAL", "ReThink": True, "myturn": True})
             self.prevState = self
@@ -93,6 +104,8 @@ class Idle:
         if(serverMsg["type"] == "MOVE"):
             serverMsg["myturn"] = True  # to know it has to move
             gameEngine.toGE(serverMsg)
+            if(serverMsg["move"]["type"] == "resign"):
+                gameEngine.toGE(await server.receive())
             return Thinking()
 
 
