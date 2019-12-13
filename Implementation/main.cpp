@@ -74,7 +74,7 @@ void make_move(int* X,int* Y, int remaining_time){
     best_x = best_y = ACK;
     MCTS MC;
     // puts("running MCTS..");
-	Action act = MC.run(state,1);
+	Action act = MC.run(state,1, remaining_time*1000, color[positive]); // WARNING: the time should be changed.
     best_x = act.p.x; best_y = act.p.y;
     X[0] = best_x; Y[0] = best_y;
     change_borad(best_x,best_y,positive);
