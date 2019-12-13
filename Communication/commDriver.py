@@ -41,12 +41,22 @@ if __name__ == '__main__':
     print("Commmunication statrted")
     msg = comm.recv()
 
+    moves = ((i, j) for i in range(19) for j in range(19))
     while(1):
-        if(msg["type"] != "END"):
-            # input("Press enter!!")
-            if(msg["myturn"]):
-                # a, b = input(f"{agentName} pick a move: ").split()
-                comm.send({"type": "MOVE", "move": {
-                    "type": "place", "point": {"row": randrange(0, 19), "column": randrange(0, 19)}}})
-        msg = comm.recv()
-        sleep(.5)
+        while(msg["type"] != "END" and msg["myturn"]):
+            try:
+                move = next(moves)
+            except:
+                moves = ((i, j) for i in range(19)
+                         for j in range(19))
+                move = next(moves)
+            comm.send({"type": "MOVE", "move": {
+                "type": "place", "point": {"row": move[0], "column": move[1]}}})
+            msg = comm.recv()
+            print(msg)
+        else:
+            msg = comm.recv()
+            print(msg)
+            if(msg["type"] == "END"):
+                break
+        sleep(.1)
