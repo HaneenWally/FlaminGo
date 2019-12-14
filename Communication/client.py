@@ -93,6 +93,8 @@ class Idle:
         if(serverMsg["type"] == "MOVE"):
             serverMsg["myturn"] = True  # to know it has to move
             gameEngine.toGE(serverMsg)
+            if(serverMsg["move"]["type"] == "resign"):
+                gameEngine.toGE(await server.receive())
             return Thinking()
 
 

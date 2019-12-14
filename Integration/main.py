@@ -74,15 +74,18 @@ def aiVsAi(msg , guiSocket , paused):
     hisColor = 'w' if myColor == 'b' else 'b'
     initialBoardHistory = []
 
-    for i in range(board.shape[0]):
-        for j in range(board.shape[1]):
-            if(board[i][j] == 1 ):
-                initialBoardHistory.append({"x":i , "y":j , "color":myColor})
-            elif(board[i][j] == -1 ):
-                initialBoardHistory.append({"x":i , "y":j , "color":hisColor})
+    for i in moveLog:
+         initialBoardHistory.append({"x":i[0] , "y":i[1] , "color":i[2]})
+    #remove ubove and undo this
+
+    # for i in range(board.shape[0]):
+    #     for j in range(board.shape[1]):
+    #         if(board[i][j] == 1 ):
+    #             initialBoardHistory.append({"x":i , "y":j , "color":myColor})
+    #         elif(board[i][j] == -1 ):
+    #             initialBoardHistory.append({"x":i , "y":j , "color":hisColor})
 
 
-    #initialBoardHistory = [{"x":2 , "y":2 , "color":'b'}] #after some processing i will get array of  dictionaries
     boolInitialBoard = True if (initialBoardHistory) else False
     moveCount = len(initialBoardHistory)
 
@@ -90,29 +93,28 @@ def aiVsAi(msg , guiSocket , paused):
         ackMsg = {'initialBoard':boolInitialBoard,"theirRemainingTime":hisRemainingTime , "ourRemainingTime":myRemainingTime , "initialCount":moveCount}
         print("send to gui ")
         print(ackMsg)
-        #sendMsg(guiSocket, ackMsg, ScoketmsgTypes.gameStart.value)
-        #msg = recMsg(guiSocket, True)
+        sendMsg(guiSocket, ackMsg, ScoketmsgTypes.gameStart.value)
+        msg = recMsg(guiSocket, True)
     else:
         ackMsg = {'initialBoard':boolInitialBoard,"theirRemainingTime":hisRemainingTime , "ourRemainingTime":myRemainingTime , "initialCount":moveCount}
         print("send to gui ")
         print(ackMsg)
-        #sendMsg(guiSocket, ackMsg, ScoketmsgTypes.AckAI_VS_AI.value)
-        #msg = recMsg(guiSocket, True)
+        sendMsg(guiSocket, ackMsg, ScoketmsgTypes.AckAI_VS_AI.value)
+        msg = recMsg(guiSocket, True)
 
     for i in range(moveCount):
         move = initialBoardHistory[i]
         print("send to gui ")
         print(move)
-        #sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
-        #msg = recMsg(guiSocket , True)
+        sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
+        msg = recMsg(guiSocket , True)
      
 
     continuePlaying = True
     gamePaused = False
-    # i think we should add pause game in the condition
+
     while(continuePlaying):
         continuePlaying , gamePaused = playOnlineGame(myColor , myTurn , guiSocket , communicationObj)
-        print(continuePlaying , gamePaused)
         myTurn = not myTurn
     return gamePaused
 
@@ -126,7 +128,7 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
             iWon = True
             ourScore =10
             theirScore= 10
-            captured = [[1,3]] # array or arrays containing x, y to be removed
+            captured = [] # array or arrays containing x, y to be removed
             countCaptured = len(captured)
             # convert it to x , y   , color
             x , y  = 0 , 0 #get them from implementation
@@ -152,21 +154,20 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
         #get captured from implementation and send them to gui too
         if(not gameEnd):
             move = {'color':myColor , 'x':x , 'y':y , 'countCaptured':countCaptured }
-            # the pause didnt get checked here
             print("send to gui ")
             print(move)
-           # sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
-           # msg = recMsg(guiSocket , True)
+            sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
+            msg = recMsg(guiSocket , True)
             for i in range(countCaptured):
                     pass
-                    #remove = { 'x':captured[i][0] , 'y':captured[i][1] }
-                    #sendMsg(guiSocket, remove, ScoketmsgTypes.remove.value)
-                    #msg = recMsg(guiSocket , True)
+                    remove = { 'x':captured[i][0] , 'y':captured[i][1] }
+                    sendMsg(guiSocket, remove, ScoketmsgTypes.remove.value)
+                    msg = recMsg(guiSocket , True)
             return not gameEnd , False
         else:
             end =  {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
-            #sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
-            #msg = recMsg(guiSocket , True)
+            sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
+            msg = recMsg(guiSocket , True)
             return not gameEnd , False
 
     else:
@@ -187,10 +188,6 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
             move , gamePaused , gameEnd = communicatoinRec(communicationObj , myColor , guiSocket)
             return False , False
 
-        # this condition will be removed i guess 
-        gamePaused = False
-        if(gamePaused):
-            return False , True
         # give move to implementation
         # get captured if there are ones or get game info if game ended
         # send to gui
@@ -201,22 +198,22 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
 
         if(gameEnd):
             end = {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
-            #sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
-           # _ = recMsg(guiSocket, True)
+            sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
+            _ = recMsg(guiSocket, True)
             return not gameEnd ,False
         else:
             # get captured stones locations if there are ones
-            captured = [[1,3]] # array or arrays containing x, y to be removed
+            captured = [] # array or arrays containing x, y to be removed
             countCaptured = len(captured)
             move = {'color':hisColor , 'x':x , 'y':y , 'countCaptured':countCaptured }
             print("send to gui ")
             print(move)
-            #sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
-            #msg = recMsg(guiSocket ,True)
+            sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
+            msg = recMsg(guiSocket ,True)
             for i in range(countCaptured):
                 remove = { 'x':captured[i][0] , 'y':captured[i][1] }
-                #sendMsg(guiSocket, remove, ScoketmsgTypes.remove.value)
-                #msg = recMsg(guiSocket , True)
+                sendMsg(guiSocket, remove, ScoketmsgTypes.remove.value)
+                msg = recMsg(guiSocket , True)
             return not gameEnd ,False
 
 
@@ -345,8 +342,8 @@ def communicatoinRec(communicationObj , myColor , guiSocket):
             gamePaused = True
             paused =  {}
             print("game paused")
-            #sendMsg(guiSocket, paused, ScoketmsgTypes.gamePaused.value)
-            #msg = recMsg(guiSocket , True)
+            sendMsg(guiSocket, paused, ScoketmsgTypes.gamePaused.value)
+            msg = recMsg(guiSocket , True)
         else:
             gameEnd = True 
             winner = msg['winner']
@@ -364,9 +361,9 @@ def communicatoinRec(communicationObj , myColor , guiSocket):
                 iWon = False
             print(gameEnd)
             print(iWon , ourScore , theirScore )
-           # end =  {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
-           # sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
-            #msg = recMsg(guiSocket , True)
+            end =  {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
+            sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
+            msg = recMsg(guiSocket , True)
             
     return msg ,gamePaused , gameEnd
 
@@ -393,9 +390,9 @@ def processMoveLog(moveLog , myColor , turn , myRemainingTime ,hisRemainingTime)
     for move in moveLog:
         if(move['move']['type'] == 'place' ):
             point = move['move']['point']
-            newMoveLog.append([[point['row'] , point['column']] , turn])
+            newMoveLog.append([point['row'] , point['column'] , turn.lower()])
         elif(move['move']['type'] == 'pass'):
-            newMoveLog.append([-1 , -1 , turn])
+            newMoveLog.append([-1 , -1 , turn.lower()])
         if turn == myColor.upper():
             myRemainingTime-=move['deltaTime']
         else:
