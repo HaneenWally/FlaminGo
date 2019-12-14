@@ -50,13 +50,11 @@ if __name__ == '__main__':
                 moves = ((i, j) for i in range(19)
                          for j in range(19))
                 move = next(moves)
-            comm.send({"type": "MOVE", "move": {
-                "type": "place", "point": {"row": move[0], "column": move[1]}}})
+            comm.send({"type": "MOVE", "move": {"type": "place",
+                                                "point": {"row": move[0], "column": move[1]}}})
             msg = comm.recv()
-            print(msg)
         else:
             msg = comm.recv()
-            print(msg)
             if(msg["type"] == "END"):
-                break
+                msg = comm.recv()
         sleep(.1)

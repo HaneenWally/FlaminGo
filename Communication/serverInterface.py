@@ -43,12 +43,12 @@ class ServerInterface:
         assert self._isconnected
         return json.loads(await self.connection.recv())
 
-    async def receiveAyncTimeOut(self, timeout=.1):
-        try:
-            assert self._isconnected
-            return json.loads(await asyncio.wait_for(self.receive(), timeout=timeout))
-        except asyncio.TimeoutError:
-            return None
+    # async def receiveAyncTimeOut(self, timeout=.1):
+    #     try:
+    #         assert self._isconnected
+    #         return json.loads(await asyncio.wait_for(self.receive(), timeout=timeout))
+    #     except asyncio.TimeoutError:
+    #         return None
 
     async def pong(self):
         return await self.connection.ping()
