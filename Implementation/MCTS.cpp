@@ -27,10 +27,10 @@ float MCTS::Policy(Node* node, Node* child)
 
 	float Qmc = (float)child->get_wins() / child->get_num_visits();
 	float Qrave = (float) action_wins / action_simulations;
-	float Q = (1 - b) * Qmc + b*Qrave; 
+	float Q = (1 - b) * Qmc + b*Qrave;
 	float ucb_exploration = sqrt(log(node->get_num_visits()) / child->get_num_visits());
 
-	float Qscore = Q + UCB1_C*ucb_exploration;
+	float Qscore = Q + UCB1_C * ucb_exploration;
 	return Qscore;
 }
 
@@ -173,9 +173,11 @@ void MCTS::Propagate(Node* node, Result reward, CellState AI_COLOR)
 	}
 
 	State tmp = node->get_state();
-	if(node && tmp.get_color() == AI_COLOR){
-		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
-	}
+
+	if(tmp.get_color() == AI_COLOR)
+        reward = (reward == WIN ? LOSE : WIN);
+
+
 	while (node)
 	{
 		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
@@ -187,7 +189,7 @@ void MCTS::Propagate(Node* node, Result reward, CellState AI_COLOR)
 			rave[a].first += action_win;
 			rave[a].second += 1;
 		}
-		
+
 		node = node->get_parent();
 	}
 }
@@ -243,7 +245,7 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 		// exit loop if current iterations exceeds max_iterations
 		if (max_iterations > 0 && iterations > max_iterations) break;
 		iterations++;
-		
+
 		//cout << "simulation number " << iterations << " done.\n";
 	}
 

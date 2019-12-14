@@ -22,7 +22,7 @@ void State::setCapturedStones(int white, int black){
 
 State::State() : Board(BOARD_DIMENSION, std::vector<CellState>(BOARD_DIMENSION, CellState::EMPTY))
 {
-	std::cout << "state constructed with empty state\n";
+	//std::cout << "state constructed with empty state\n";
 }
 
 CapturedStones State::getCapturedstones() const{

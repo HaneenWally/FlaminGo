@@ -10,6 +10,7 @@ Action current, prev_action(CellState::EMPTY, Point(0,0));
 CellState color[] = {WHITE, BLACK};
 int positive, best_x, best_y, current_color;
 GoEngine engine;
+int empty_cells;
 //------------------------------------------
 extern "C"
 void PyInit_implementation(){
@@ -20,6 +21,7 @@ extern "C"
 // This function will take 2 arrays to fill the board with initial value.
 // NOTE: the positive values in the array mean that it's AI_AGENT move.
 void fill_initial(int* X,int* Y, int white,int black){
+    empty_cells = 19*19;
     state.clear();
     prev_state.set_color(CellState::EMPTY);
     prev_state.clear();
@@ -55,9 +57,11 @@ void reach_initial(int* X,int* Y,int cur){
     }
     idx = 0;
     for(int i = 0;i<BOARD_DIMENSION;++i)
-        for(int j = 0;j<BOARD_DIMENSION;++j)
+        for(int j = 0;j<BOARD_DIMENSION;++j){
             if(state(i,j)==color[positive]) X[idx] = i+1,Y[idx++] = j+1;
             else if(state(i,j)==color[!positive]) X[idx] = -(i+1),Y[idx++] = -(j+1);
+            empty_cells += (state(i,j) == EMPTY);
+        }
     X[idx] = Y[idx] = ACK;
 }
 
@@ -84,15 +88,16 @@ void make_move(int* X,int* Y, int remaining_time){
     else{
         MCTS MC;
         // puts("running MCTS..");
-        Action act = MC.run(state,1, remaining_time*1000, color[positive]); // WARNING: the time should be changed.
+        int time_limit = remaining_time / (empty_cells/2);
+        Action act = MC.run(state,1, time_limit*1000, color[positive]);
         best_x = act.p.x; best_y = act.p.y;
     }
-    
+    empty_cells--;
     X[0] = best_x; Y[0] = best_y;
     change_borad(best_x,best_y,positive);
     int idx = 1; // should start from 1.
     for(Point p:state.last_captured_positions)
-        X[idx] = p.x, Y[idx] = p.y,idx++;
+        X[idx] = p.x, Y[idx] = p.y,idx++,empty_cells++;
     X[idx] = Y[idx] = ACK;
 }
 
@@ -109,11 +114,11 @@ extern "C"
 int opponent_move(int* X,int* Y,int remaining_time){
     // the following line is useless IN CASE we r dealing with AI vs AI. but it's important in AI vs HUMAN.
     if(!valid(X[0],Y[0])) return 0;
-
+    empty_cells--;
     change_borad(X[0],Y[0],!positive);
     int idx = 0;
     for(Point p:state.last_captured_positions)
-        X[idx] = p.x, Y[idx] = p.y,idx++;
+        X[idx] = p.x, Y[idx] = p.y,idx++, empty_cells++;
     X[idx] = Y[idx] = ACK;
     return 1;
 }
