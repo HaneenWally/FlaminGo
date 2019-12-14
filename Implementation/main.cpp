@@ -77,10 +77,17 @@ void change_borad(int x,int y,int turn){
 extern "C"
 void make_move(int* X,int* Y, int remaining_time){ 
     best_x = best_y = ACK;
-    MCTS MC;
-    // puts("running MCTS..");
-	Action act = MC.run(state,1, remaining_time*1000, color[positive]); // WARNING: the time should be changed.
-    best_x = act.p.x; best_y = act.p.y;
+    // If the last move for the opponent is "pass" and AI_AGENT is winning now, then no need for MCTS.
+    if(prev_action.isPass() && is_winner(color[positive], engine.computeScore(state)) ){
+        best_x = best_y = -1;
+    }
+    else{
+        MCTS MC;
+        // puts("running MCTS..");
+        Action act = MC.run(state,1, remaining_time*1000, color[positive]); // WARNING: the time should be changed.
+        best_x = act.p.x; best_y = act.p.y;
+    }
+    
     X[0] = best_x; Y[0] = best_y;
     change_borad(best_x,best_y,positive);
     int idx = 1; // should start from 1.

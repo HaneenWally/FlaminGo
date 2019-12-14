@@ -16,7 +16,7 @@ Node::Node(State& state, Node* parent = NULL) :
 //All nodes share the same game engine.
 GoEngine Node::engine = GoEngine();
 
-Node* Node::expand()
+Node* Node::expand(CellState AI_COLOR)
 {
 	// First check if this Node is fully expanded or not.
 	if (is_fully_expanded()) return NULL;
@@ -26,6 +26,12 @@ Node* Node::expand()
 
 		// Get the list of actions that this Node can do.
 		actions = engine.getValidMoves(&state, (parent == NULL ? NULL : &(parent->state)), Switch(state.get_color()));
+		
+		// NOTE: if "pass" is included in the list of actions. then it will be the last one.
+		if( !actions.empty() && actions.back().isPass() &&  !is_winner(AI_COLOR, engine.computeScore(state)) ) actions.pop_back();
+		if(actions.empty()) return NULL;
+		// NOTE: assuming there are another actions in the list.
+
 		//puts("List of Valid Actions");
 		//for(auto x:actions) cout << x;
 		//state.get_actions(actions);

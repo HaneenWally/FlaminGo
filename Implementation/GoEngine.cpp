@@ -1,7 +1,7 @@
 #include "definitions.h"
 #include "GoEngine.h"
 #include <stdlib.h>
-#include <time.h> 
+#include <time.h>
 
 #include<random>
 
@@ -155,9 +155,9 @@ bool GoEngine::isValidMove(State state, const State& prevState, Action move) {
 
 bool GoEngine::isValidMove(const State* state, const State* prevState, Action move) {
 	// occupied point
+	if (move.isPass()) return true;
 	if ((*state)(pxy(move)) != int(CellState::EMPTY)) return false;
 	if (!isOnBoard(move.p)) return false;
-	if (move.isPass()) return true;
 	State newState(*state);
 	newState += move;
 	//std::cout << "state after placing move " << (*state)(12, 0) << '\n';

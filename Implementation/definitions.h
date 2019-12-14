@@ -32,6 +32,7 @@ enum CellState {
 
 // This function switch the color depending on the current color.
 #define Switch(current_color) (current_color == WHITE? BLACK:WHITE)
+#define is_winner(color, score) ( (color == WHITE && score.white > score.black) || (color == BLACK && score.black > score.white) )
 
 enum Result
 {

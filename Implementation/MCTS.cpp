@@ -83,12 +83,12 @@ Node* MCTS::Select(Node* node)
 }
 
 // Expand, Expand by adding single child (if not terminal or not fully expanded)
-Node* MCTS::Expand(Node* node)
+Node* MCTS::Expand(Node* node, CellState AI_COLOR)
 {
 	assert(node != NULL);
 	if (!node->is_fully_expanded() && !node->is_terminal())
 	{
-		node = node->expand();
+		node = node->expand(AI_COLOR);
 	}
 	return node;
 }
@@ -126,15 +126,18 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 	state.apply_action(action);
 	}
 	*/
-	CellState (*function_that_get_AI_COLOR)();
 	Score score = engine.computeScore(state);
-	return ( (score.white > score.black && AI_COLOR == WHITE) || (score.white < score.black && AI_COLOR == BLACK) ? WIN:LOSE);
+	return ( is_winner(AI_COLOR, score) ? WIN:LOSE);
 	// return state.evalute();     // WIN or LOSE.
 }
 
 //Back Propagation, Update the path of hte node
-void MCTS::Propagate(Node* node, Result reward)
+void MCTS::Propagate(Node* node, Result reward, CellState AI_COLOR)
 {
+	State tmp = node->get_state();
+	if(node && tmp.get_color() == AI_COLOR){
+		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
+	}
 	while (node)
 	{
 		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
@@ -143,7 +146,7 @@ void MCTS::Propagate(Node* node, Result reward)
 	}
 }
 
-Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_color)
+Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_COLOR)
 {
 	this->max_millis = time_limit;
 	timer.init();
@@ -161,18 +164,18 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_co
 		Node* node = Select(&root_node);
         //puts("Node selected successfully.");
 		// 2. Expand
-		node = Expand(node);
+		node = Expand(node, AI_COLOR);
 		//puts("Node expanded successfully.");
 
 		State state(node->get_state());
 
 		// 3. Simulate   // NOTE: the parent node will never = NULL, as the concept of expanding prevent that from happening.
-		Result reward = Simulate(state,node->get_parent()==NULL? state:node->get_parent()->get_state(), node->get_action(), node->get_parent()->get_action(), AI_color);
+		Result reward = Simulate(state,node->get_parent()==NULL? state:node->get_parent()->get_state(), node->get_action(), node->get_parent()->get_action(), AI_COLOR);
         //puts("Got the reward successfully.");
 		//if(explored_states) explored_states->push_back(state);
 
 		// 4. BACK PROPAGATION
-		Propagate(node, reward);
+		Propagate(node, reward, AI_COLOR);
 		//puts("Propagation is done successfully.");
 
 
