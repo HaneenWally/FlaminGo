@@ -2,6 +2,8 @@
 #include "GoEngine.h"
 #include <time.h>
 #include "MCTS.h"
+#include <windows.h>
+
 using namespace std;
 void test1();
 void test2();
@@ -12,53 +14,83 @@ int main()
 	test3();
 	return 0;
 }
+void Print(State& state, Point p)
+{
+    cout << "The current Board:\n";
+	char arr[] = {'B','.','W'};
+	for(int i=0;i<BOARD_DIMENSION;++i)
+		for(int j = 0;j<BOARD_DIMENSION;++j){
+            if(i == p.x && j == p.y){
+                HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+                SetConsoleTextAttribute(hConsole, 10);
+                cout << arr[state(i,j)+1] << " \n"[j==BOARD_DIMENSION-1];
+                SetConsoleTextAttribute(hConsole, 15);
+            }
+            else cout << arr[state(i,j)+1] << " \n"[j==BOARD_DIMENSION-1];
+		}
 
+}
 void test3()
 {
-	State state,prv_state,old_state;
-	prv_state.set_color(EMPTY);
-	CellState arr[] = {WHITE,BLACK,EMPTY};
-	srand(time(NULL));
-	for(int i=0;i<BOARD_DIMENSION;++i)
-		for(int j = 0;j<BOARD_DIMENSION;++j)
-			state(i,j) = arr[ rand()%3 ];
-	cout << state << endl;
-	state.set_color(WHITE);
-	puts("Applying MCTS..");
-	MCTS carloh;
-	GoEngine engine;
-	Action cur, prv(WHITE,Point(0, 0));
-	int turn = 0;
-	while (!engine.isGoal(state, cur, prv))
-	{
-		old_state = state;
-		prv = cur;
-		if (!turn) {
-			cur = carloh.run(state, 1, 5 * 1000, BLACK);
-			engine.applyAction(state, prv_state.get_color() == EMPTY? NULL: &prv_state, cur);
-		}
-		else {
-			engine.getRandomAction(cur, &state, &prv_state, WHITE);
-			engine.applyAction(state, &prv_state, cur);
-		}
-		// cout << cur << endl;
-		// cout << state << endl;
-		
-		prv_state = old_state;
+    freopen("log.txt","w",stdout);
+    int tests = 10;
+    while(tests--){
+        State state,prv_state,old_state;
+        prv_state.set_color(EMPTY);
+        CellState arr[] = {WHITE,BLACK,EMPTY};
+        string out[] = {"WHITE","BLACK"};
+        srand(time(NULL));
+        int wh = 0,bl = 0;
+        for(int i=0;i<BOARD_DIMENSION;++i)
+            for(int j = 0;j<BOARD_DIMENSION;++j)
+                state(i,j) = arr[ rand()%3 ], wh+= state(i,j) == WHITE, bl += state(i,j) == BLACK;
 
-		turn = !turn;
-	}
-	Score sc = engine.computeScore(state);
+        for(int i=0;i<BOARD_DIMENSION && abs(wh-bl) > 2;++i)
+            for(int j = 0;j<BOARD_DIMENSION && abs(wh-bl) > 2;++j)
+                if(bl > wh && state(i,j) == BLACK) state(i,j) = arr[2],bl--;
+                else if(wh > bl && state(i,j) == WHITE) state(i,j) = arr[2],wh--;
 
-	if (sc.white > sc.black)
-	{
-		cout << "White wins\n";
-	}
-	else
-	{
-		cout << "Black Wins";
-	}
-	
+        //cout << state << endl;
+        int idx = rand()%2;
+        CellState OPPO = arr[idx];
+        CellState AI = arr[!idx];
+        state.set_color(OPPO);
+        //puts("Applying MCTS..");
+        MCTS carloh;
+        GoEngine engine;
+        Action cur, prv(OPPO,Point(0, 0));
+        int turn = 0;
+        long long counter = 0;
+        while (!engine.isGoal(state, cur, prv) && ++counter <= 50)
+        {
+            old_state = state;
+            prv = cur;
+            if (!turn) {
+                cur = carloh.run(state, 1, 5 * 1000, AI);
+                engine.applyAction(state, prv_state.get_color() == EMPTY? NULL: &prv_state, cur);
+                //Print(state, cur.getMove());
+            }
+            else {
+                engine.getRandomAction(cur, &state, &prv_state, OPPO);
+                engine.applyAction(state, &prv_state, cur);
+            }
+            // cout << cur << endl;
+            //cout << state << endl;
+            prv_state = old_state;
+
+            turn = !turn;
+        }
+        puts("----");
+
+        cout << "AI COLOR: " << out[!idx] << endl;
+        Score sc = engine.computeScore(state);
+        if(is_winner(arr[!idx], sc)) puts("WIN");
+        else puts("LOSE");
+
+        //if (sc.white > sc.black) cout << "White wins\n";
+        //else cout << "Black Wins\n";
+        cout << "White score: " << sc.white << " Black score: " << sc.black << endl;
+    }
 }
 
 void test1() {
