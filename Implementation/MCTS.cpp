@@ -9,6 +9,7 @@ MCTS::MCTS()
 	max_iterations = 100;
 	max_millis = 1 * 1000;  // MUST BE CHANGED.
 	simulation_depth = 100;
+	k = 100;
 }
 GoEngine MCTS::engine = GoEngine();
 int MCTS::get_iterations() const
@@ -18,11 +19,19 @@ int MCTS::get_iterations() const
 
 float MCTS::Policy(Node* node, Node* child)
 {
-	// (wk / nk) + C * sqrt(ln(n par) / nk)
-	float ucb_exploitation = (float)child->get_wins() / child->get_num_visits();
+	Action a = child->get_action();
+
+	int action_wins = rave[a].first;
+	int action_simulations = rave[a].second;
+	float b = sqrt(k / (k+action_simulations));
+
+	float Qmc = (float)child->get_wins() / child->get_num_visits();
+	float Qrave = (float) action_wins / action_simulations;
+	float Q = (1 - b) * Qmc + b*Qrave; 
 	float ucb_exploration = sqrt(log(node->get_num_visits()) / child->get_num_visits());
-	float ucb_score = ucb_exploitation + UCB1_C * ucb_exploration;
-	return ucb_score;
+
+	float Qscore = Q + ucb_exploration;
+	return Qscore;
 }
 
 // get best child for given node based on UCB score
@@ -90,30 +99,36 @@ Node* MCTS::Expand(Node* node, CellState AI_COLOR)
 	{
 		node = node->expand(AI_COLOR);
 	}
+
 	return node;
 }
 
 //Simulate, Apply random actions till the game ends(win or lose)
 Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_action, CellState AI_COLOR)
 {
-
+	// puts("Here");
 	if (!engine.isGoal(state, action, prev_action))
 	{
 		for (int d = 0; d < simulation_depth; ++d)
 		{
+			// puts("IsGoal done 0");
 			if (engine.isGoal(state, action, prev_action))
 			{
 				break;
 			}
+			// puts("IsGoal done 1");
 			prev_action = action;
 			if (engine.getRandomAction(action, &state, &prev_state,Switch(state.get_color()))) // TODO: interface correct and send missing params [DONE]
 			{
+				// puts("IsGoal done 2");
 				this->engine.applyValidAction(state, action);
+
 			}
 			else
 			{
 				break;
 			}
+			// puts("IsGoal done 3");
 		}
 	}
 	/*
@@ -134,6 +149,11 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 //Back Propagation, Update the path of hte node
 void MCTS::Propagate(Node* node, Result reward, CellState AI_COLOR)
 {
+	int action_win = 0;
+	if (reward == WIN){
+		action_win = 1;
+	}
+
 	State tmp = node->get_state();
 	if(node && tmp.get_color() == AI_COLOR){
 		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
@@ -142,6 +162,14 @@ void MCTS::Propagate(Node* node, Result reward, CellState AI_COLOR)
 	{
 		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
 		node->update(reward);
+
+		if(node->get_parent()){
+
+			Action a = node->get_action();
+			rave[a].first += action_win;
+			rave[a].second += 1;
+		}
+		
 		node = node->get_parent();
 	}
 }
@@ -162,21 +190,30 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 
 		// 1. SELECT
 		Node* node = Select(&root_node);
-        //puts("Node selected successfully.");
+        // puts("Node selected successfully.");
 		// 2. Expand
 		node = Expand(node, AI_COLOR);
-		//puts("Node expanded successfully.");
+		// puts("Node expanded successfully.");
 
-		State state(node->get_state());
+		// puts("hawdawd");
+		State state = node->get_state();
 
+
+		// puts("para1");
+		State par = node->get_parent() == NULL ? state : node->get_parent()->get_state();
+		// puts("para2");
+		Action a = node->get_action();
+		// puts("para3");
+		Action pre_a = node->get_parent()->get_action();
+		// puts("para4");
 		// 3. Simulate   // NOTE: the parent node will never = NULL, as the concept of expanding prevent that from happening.
-		Result reward = Simulate(state,node->get_parent()==NULL? state:node->get_parent()->get_state(), node->get_action(), node->get_parent()->get_action(), AI_COLOR);
-        //puts("Got the reward successfully.");
+		Result reward = Simulate(state, par, a, pre_a, AI_COLOR);
+		// puts("Got the reward successfully.");
 		//if(explored_states) explored_states->push_back(state);
 
 		// 4. BACK PROPAGATION
 		Propagate(node, reward, AI_COLOR);
-		//puts("Propagation is done successfully.");
+		// puts("Propagation is done successfully.");
 
 
 		best_node = get_most_visited_child(&root_node);
@@ -187,6 +224,7 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 		// exit loop if current iterations exceeds max_iterations
 		if (max_iterations > 0 && iterations > max_iterations) break;
 		iterations++;
+		
 		//cout << "simulation number " << iterations << " done.\n";
 	}
 
