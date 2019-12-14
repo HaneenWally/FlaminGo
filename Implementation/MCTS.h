@@ -36,7 +36,7 @@ public:
 	const LoopTimer& get_timer() const;
 	int get_iterations() const;
 	Node* get_best_child(Node*, float);
-	Node* get_most_visited_child(Node*);
+	vector<Node*> get_most_visited_child(Node*);
 	Node* Select(Node*);
 	Node* Expand(Node*, CellState);
 	Result Simulate(State, State, Action, Action, CellState);

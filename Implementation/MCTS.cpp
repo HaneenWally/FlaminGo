@@ -30,7 +30,7 @@ float MCTS::Policy(Node* node, Node* child)
 	float Q = (1 - b) * Qmc + b*Qrave; 
 	float ucb_exploration = sqrt(log(node->get_num_visits()) / child->get_num_visits());
 
-	float Qscore = Q + ucb_exploration;
+	float Qscore = Q + UCB1_C*ucb_exploration;
 	return Qscore;
 }
 
@@ -62,23 +62,41 @@ Node* MCTS::get_best_child(Node* node, float ucb_c)
 	return best_node;
 }
 
-Node* MCTS::get_most_visited_child(Node* node)
+vector<Node*> MCTS::get_most_visited_child(Node* node)
 {
-	int most_visits = -1;
-	Node* best_node = NULL;
+	int most_visits1 = -1;
+	int most_visits2 = -1;
+	Node* best_node1 = NULL;
+	Node* best_node2 = NULL;
 
 	int num_childs = node->get_num_children();
 	for (int i = 0; i<num_childs; ++i)
 	{
 		Node* child = node->get_child(i);
-		if (child->get_num_visits() > most_visits)
+		if (child->get_num_visits() > most_visits1)
 		{
-			most_visits = child->get_num_visits();
-			best_node = child;
+			most_visits1 = child->get_num_visits();
+			best_node2 = best_node1;
+			best_node1 = child;
+		}
+		else if (child->get_num_visits() > most_visits2)
+		{
+			most_visits2 = child->get_num_visits();
+			best_node2 = child;
 		}
 	}
 
-	return best_node;
+	vector<Node*> best_moves;
+	if(best_node1)
+	{
+		best_moves.push_back(best_node1);
+	}
+	if(best_node2)
+	{
+		best_moves.push_back(best_node2);
+	}
+
+	return best_moves;
 }
 
 // Descend, return node with best score
@@ -179,9 +197,10 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 	this->max_millis = time_limit;
 	timer.init();
 
+	State root_state = current_state;
 	Node root_node(current_state, NULL);
 
-	Node* best_node = NULL;
+	vector<Node*> best_nodes;
 	iterations = 0;
 
 	while (true)
@@ -216,7 +235,7 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 		// puts("Propagation is done successfully.");
 
 
-		best_node = get_most_visited_child(&root_node);
+		best_nodes = get_most_visited_child(&root_node);
 
 		timer.loop_end();
 		if (max_millis > 0 && timer.check_duration(max_millis)) break;
@@ -229,9 +248,15 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 	}
 
 	// Return the action to the best node
-	if (best_node)
+	if (best_nodes.size())
 	{
-		return best_node->get_action();
+		Score sc = engine.computeScore(root_state);
+		if(best_nodes[0]->get_action().isPass() && !is_winner(AI_COLOR, sc))
+		{
+			return best_nodes.back()->get_action();
+		}
+	
+		return best_nodes[0]->get_action();
 	}
 
 	// You shouldn't be here.

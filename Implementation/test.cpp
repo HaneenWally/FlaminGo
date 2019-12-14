@@ -56,8 +56,9 @@ void test3()
 	}
 	else
 	{
-		cout << "Black Wins";
+		cout << "Black Wins\n";
 	}
+	cout << "Scores W B : " << sc.white << " " << sc.black << "\n";
 	
 }
 
