@@ -12,7 +12,7 @@ class Init:
     async def handle(self, server, gameEngine, client):
         serverMsg = await server.receive()
         assert serverMsg["type"] in ["NAME", "END"]  # TODO
-        await server.send({"type": "NAME", "name": client.clientName})
+        await server.send({"type": "NAME", "name": client.clientName, "protocol": client.protocolVersion})
         return Ready()
 
 
@@ -93,16 +93,18 @@ class Idle:
 
 class Disconnected:
     async def handle(self, server, gameEngine, client):
-        if(await server.connect()):
+        if(await server.connect(client.pingInterval)):
             return Init()
         return self
 
 
 class Client:
-    def __init__(self, clientName):
+    def __init__(self, clientName, protocolVersion, pingInterval):
         logging.basicConfig(filename='client.log', filemode='w',
                             format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
         self.clientName = clientName
+        self.protocolVersion = protocolVersion
+        self.pingInterval = pingInterval
         self.intialState = Disconnected()
         self.currState = self.intialState
 
@@ -127,7 +129,6 @@ class Client:
                     await self._returnToIntial(server, gameEngine)
 
     def start(self, server, gameEngine):
-        # self._startHeartBeatProcess(server)
         asyncio.get_event_loop().run_until_complete(
             self._communicate(server, gameEngine))
 

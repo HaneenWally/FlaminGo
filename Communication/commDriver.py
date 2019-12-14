@@ -5,8 +5,8 @@ from gameEngineInterface import *
 
 
 class CommunicationDriver:
-    def __init__(self, clientName, serverUri):
-        self.client = Client(clientName)
+    def __init__(self, clientName, serverUri, protocolVersion="v2", pingInterval=.5):
+        self.client = Client(clientName, protocolVersion, pingInterval)
         self.serverInterface = ServerInterface(serverUri)
         self.gameEngineInterface = GEI(doubleQueuePipe())
 
@@ -53,6 +53,7 @@ if __name__ == '__main__':
             comm.send({"type": "MOVE", "move": {"type": "place",
                                                 "point": {"row": move[0], "column": move[1]}}})
             msg = comm.recv()
+            # print(msg)
         else:
             msg = comm.recv()
             if(msg["type"] == "END"):
