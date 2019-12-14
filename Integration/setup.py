@@ -6,7 +6,8 @@ cppFiles = glob(os.path.join(os.path.abspath('../'), 'Implementation', '*.cpp') 
 # Compile *mysum.cpp* into a shared library 
 module = Extension(name = 'implementation', 
                 sources = cppFiles,
-                extra_compile_args = ['-std=c++11']
+                extra_link_args = ['/EXPORT:opponent_move', '/EXPORT:AI_score', '/EXPORT:is_done', '/EXPORT:make_move', '/EXPORT:reach_initial', '/EXPORT:set_color', '/EXPORT:fill_initial']
+                #extra_compile_args = ['-std=c++11']
                 )
 setup(
     #...
