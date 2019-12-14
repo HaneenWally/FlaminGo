@@ -12,6 +12,11 @@ int positive, best_x, best_y, current_color;
 GoEngine engine;
 //------------------------------------------
 extern "C"
+void PyInit_implementation(){
+    printf("Hello Taha");
+}
+
+extern "C"
 // This function will take 2 arrays to fill the board with initial value.
 // NOTE: the positive values in the array mean that it's AI_AGENT move.
 void fill_initial(int* X,int* Y, int white,int black){

@@ -5,7 +5,7 @@ from threading import Thread
 
 class ImplemenationWrapper():
     # find the shared library, the path depends on the platform and Python version
-    libfile = glob.glob('build/*/implementation*.so')[0]
+    libfile = glob.glob('build/*/implementation*.pyd')[0]
 
     # 1. open the shared library
     impLib = ctypes.CDLL(libfile)
@@ -13,13 +13,14 @@ class ImplemenationWrapper():
     boardSize = 19
     def __init__(self):
         # define the function type in and return
+        self.impLib.opponent_move.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32), 
+                                    np.ctypeslib.ndpointer(dtype=np.int32), 
+                                    ctypes.c_int]
+                                    
         self.impLib.fill_initial.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32), 
                                     np.ctypeslib.ndpointer(dtype=np.int32), 
                                     ctypes.c_int, ctypes.c_int]
         
-        self.impLib.opponent_move.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32), 
-                                    np.ctypeslib.ndpointer(dtype=np.int32), 
-                                    ctypes.c_int]
         self.impLib.opponent_move.restype = ctypes.c_int 
         
         self.impLib.AI_score.argtypes = [ctypes.c_int]
