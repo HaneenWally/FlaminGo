@@ -132,8 +132,12 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 }
 
 //Back Propagation, Update the path of hte node
-void MCTS::Propagate(Node* node, Result reward)
+void MCTS::Propagate(Node* node, Result reward, CellState AI_COLOR)
 {
+	State tmp = node->get_state();
+	if(node && tmp.get_color() == AI_COLOR){
+		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
+	}
 	while (node)
 	{
 		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
@@ -171,7 +175,7 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 		//if(explored_states) explored_states->push_back(state);
 
 		// 4. BACK PROPAGATION
-		Propagate(node, reward);
+		Propagate(node, reward, AI_COLOR);
 		//puts("Propagation is done successfully.");
 
 

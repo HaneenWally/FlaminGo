@@ -35,7 +35,7 @@ public:
 	Node* Select(Node*);
 	Node* Expand(Node*, CellState);
 	Result Simulate(State, State, Action, Action, CellState);
-	void Propagate(Node*, Result);
+	void Propagate(Node*, Result, CellState);
 	Action run(State&, int,int, CellState);
 
 	~MCTS();

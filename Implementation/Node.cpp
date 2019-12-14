@@ -29,6 +29,7 @@ Node* Node::expand(CellState AI_COLOR)
 		
 		// NOTE: if "pass" is included in the list of actions. then it will be the last one.
 		if( !actions.empty() && actions.back().isPass() &&  !is_winner(AI_COLOR, engine.computeScore(state)) ) actions.pop_back();
+		if(actions.empty()) return NULL;
 		// NOTE: assuming there are another actions in the list.
 
 		//puts("List of Valid Actions");
