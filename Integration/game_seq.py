@@ -78,7 +78,7 @@ class ImplemenationWrapper():
         #     elif color == myColor: x_list[i], y_list[i] = x + 1, y + 1
         #     else: x_list[i], y_list[i] = - (x + 1), -(y + 1)
         for i, (x,y,_) in enumerate(logs): x_list[i], y_list[i] = x,y
-        x_list[i+1] = self.ACK; y_list[i+1] = self.ACK
+        x_list[len(logs)] = self.ACK; y_list[len(logs)] = self.ACK
         # color of the first player of the log, if black = 1
         self.impLib.reach_initial(x_list, y_list, int(bool(logs[0][2] == 'b')))
 
@@ -92,28 +92,40 @@ class ImplemenationWrapper():
         return board  
 
     def opponent_move(self, x, y, remaningTime):
+        # time is in seconds
         # take the x, y from the against player and return captured
         # if passed it should be called with -1,-1
         x_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
         y_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
-        x_list[0] = x; y_list[0] = y;
+        x_list[0] = x; y_list[0] = y
         x_list[1] = self.ACK; y_list[1] = self.ACK
 
-        is_valid = self.impLib.opponent_move(x_list, y_list, int(remaningTime))
+        try:
+            is_valid = self.impLib.opponent_move(x_list, y_list, int(remaningTime))
+        except:
+            import pdb; pdb.set_trace()
+
         
         if is_valid:
-            return is_valid, self.__get_captured(x_list, y_list)
+            return int(is_valid), self.__get_captured(x_list, y_list)
         else:
-            return is_valid, []
+            return int(is_valid), []
 
     def my_move(self, remaningTime):
+        # time is in seconds
         self.x = self.ACK
         self.y = self.ACK
         self.captured = []
         x_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
         y_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
-        self.impLib.make_move(x_list, y_list, int(remaningTime))
-        self.x, self.y = x_list[0], y_list[0]
+        try:
+            self.impLib.make_move(x_list, y_list, int(remaningTime))
+            if(int(x_list[0]) == -1 and  int(y_list[0]) ==-1):
+                import pdb; pdb.set_trace()
+        except:
+            import pdb; pdb.set_trace()
+            
+        self.x, self.y = int(x_list[0]), int(y_list[0])
         self.captured = self.__get_captured(x_list[1:], y_list[1:])
         # -1 and -1 is pass move
         return self.x, self.y, self.captured
@@ -123,17 +135,17 @@ class ImplemenationWrapper():
         captured = []
         for x,y in zip(x_list, y_list):
             if x == self.ACK or y == self.ACK: break
-            captured.append([x,y])
+            captured.append([int(x),int(y)])
         
         return captured
 
     def get_score(self):
         blackScore = self.impLib.AI_score(1)
         whiteScore = self.impLib.AI_score(0)
-        return blackScore, whiteScore
+        return int(blackScore), int(whiteScore)
 
     def game_end(self):
-        return self.impLib.is_done()
+        return int(self.impLib.is_done())
 
 if __name__ == "__main__":
     print('python say: hello')

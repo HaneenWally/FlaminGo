@@ -5,8 +5,9 @@ import sys
 sys.path.append("../Communication/")
 import numpy as np
 from commDriver import CommunicationDriver
-
+from game_seq import ImplemenationWrapper
 communicationObj =""
+ImplemenationObj = ImplemenationWrapper()
 
 class ScoketmsgTypes(enum.Enum):
     AI_VS_AI=0
@@ -25,6 +26,7 @@ class ScoketmsgTypes(enum.Enum):
     ackIgnore = 12
 
 def main():
+
     guiSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     guiSocket.bind(('127.0.0.1', 4500))
     guiSocket.listen(2)
@@ -45,7 +47,9 @@ def main():
             aiVsHuman(msg , guiConnection)
 
 def aiVsAi(msg , guiSocket , paused):
+
     global communicationObj
+    global ImplemenationObj
     ip = msg["msg"]["IP"]
     port = msg["msg"]["port"]
     # send to communication team ip and port to connect to server
@@ -70,20 +74,27 @@ def aiVsAi(msg , guiSocket , paused):
     print(myColor)
     #send moveLog and board to implementation and get stones to get remove from state and current state
     
+    implColor = 1 if (myColor == 'b') else 0
+    number_of_w_captures = myPrisoners if (myColor == "w") else hisPrisoners
+    number_of_b_captures = myPrisoners if (myColor == "b") else hisPrisoners
+    ImplemenationObj.fill_init_board(board ,implColor ,number_of_w_captures ,number_of_b_captures )
+    if(len(moveLog)):
+        board = ImplemenationObj.fill_init_log(moveLog)
+
     ########## after geting last board
     hisColor = 'w' if myColor == 'b' else 'b'
     initialBoardHistory = []
 
-    for i in moveLog:
-         initialBoardHistory.append({"x":i[0] , "y":i[1] , "color":i[2]})
+    #for i in moveLog:
+     #    initialBoardHistory.append({"x":i[0] , "y":i[1] , "color":i[2]})
     #remove ubove and undo this
 
-    # for i in range(board.shape[0]):
-    #     for j in range(board.shape[1]):
-    #         if(board[i][j] == 1 ):
-    #             initialBoardHistory.append({"x":i , "y":j , "color":myColor})
-    #         elif(board[i][j] == -1 ):
-    #             initialBoardHistory.append({"x":i , "y":j , "color":hisColor})
+    for i in range(board.shape[0]):
+        for j in range(board.shape[1]):
+            if(board[i][j] == 1 ):
+                initialBoardHistory.append({"x":i , "y":j , "color":myColor})
+            elif(board[i][j] == -1 ):
+                initialBoardHistory.append({"x":i , "y":j , "color":hisColor})
 
 
     boolInitialBoard = True if (initialBoardHistory) else False
@@ -112,28 +123,26 @@ def aiVsAi(msg , guiSocket , paused):
 
     continuePlaying = True
     gamePaused = False
-
+    playOnlineGame.remaningTime = myRemainingTime
     while(continuePlaying):
-        continuePlaying , gamePaused = playOnlineGame(myColor , myTurn , guiSocket , communicationObj)
+        continuePlaying , gamePaused = playOnlineGame(myColor , myTurn , guiSocket , communicationObj )
         myTurn = not myTurn
     return gamePaused
 
 
-def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
+def playOnlineGame(myColor , myTurn , guiSocket , communicationObj ):
+    
+    global ImplemenationObj
     hisColor = 'w' if myColor == 'b' else 'b'
     if(myTurn):
         while(True):
+            x , y , captured =ImplemenationObj.my_move(playOnlineGame.remaningTime)
             # get move from implementation
             gameEnd = False
             iWon = True
             ourScore =10
             theirScore= 10
-            captured = [] # array or arrays containing x, y to be removed
             countCaptured = len(captured)
-            # convert it to x , y   , color
-            x , y  = 0 , 0 #get them from implementation
-            x = int(input("x")) # remove this 
-            y = int(input("y"))# remove this
             # send move to communication
             toComm={}
             point={"row":x , "column":y}
@@ -178,7 +187,7 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
         if(gameEnd):
             return False , False
         print(move)
-        remainingTime = move['remainingTime']
+        playOnlineGame.remaningTime = move['remainingTime']['B']/1000 if(myColor == "b") else   move['remainingTime']['W']/1000
         moveType = move['move']['type']
         if(moveType == "pass"):
             x , y = -1, -1
@@ -189,21 +198,21 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
             return False , False
 
         # give move to implementation
+        _ , captured =ImplemenationObj.opponent_move(x , y , 0)
+
         # get captured if there are ones or get game info if game ended
         # send to gui
         gameEnd = False
         iWon = True
         ourScore =10
         theirScore= 10
-
         if(gameEnd):
             end = {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
             sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
             _ = recMsg(guiSocket, True)
             return not gameEnd ,False
         else:
-            # get captured stones locations if there are ones
-            captured = [] # array or arrays containing x, y to be removed
+            # get captured stones locations if there are ones 
             countCaptured = len(captured)
             move = {'color':hisColor , 'x':x , 'y':y , 'countCaptured':countCaptured }
             print("send to gui ")
@@ -218,6 +227,7 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj):
 
 
 def aiVsHuman(msg , guiSocket):
+    global ImplemenationObj
     print("i am here")
     ackMsg = {'ack':'ack'}
     sendMsg(guiSocket, ackMsg, ScoketmsgTypes.ackIgnore.value)
@@ -227,6 +237,7 @@ def aiVsHuman(msg , guiSocket):
     # send color to implementation team
     initialCount = msg["msg"]["initialCount"]
     blackCount , whiteCount = 0 , 0
+    board = np.zeros((19,19))
     for i in range(initialCount):
         msg =recMsg(guiSocket , False)
         if(msg["type"] == ScoketmsgTypes.move.value):
@@ -235,8 +246,10 @@ def aiVsHuman(msg , guiSocket):
                 blackCount+=1
             elif(color == 'w'):
                 whiteCount+=1
-            # same comment as above
-            # send move to implementation team
+            if(myColor == color):
+                board[x][y] = 1
+            else:
+                board[x][y] = -1
         else:
             print("wrong values from gui")
         sendMsg(guiSocket, ackMsg, ScoketmsgTypes.ackIgnore.value)
@@ -246,7 +259,8 @@ def aiVsHuman(msg , guiSocket):
     myTurn = True
     if(myColor != whoPlayFirst ):
         myTurn = False
-
+    impleColor = int(myColor == 'b')
+    ImplemenationObj.fill_init_board(board,impleColor, 0 , 0)
     continuePlaying = True
     while(continuePlaying):
         continuePlaying , myTurn = playGame(myColor , myTurn , guiSocket)
@@ -254,20 +268,27 @@ def aiVsHuman(msg , guiSocket):
 
 
 def playGame(myColor , myTurn,guiSocket ):
+    global ImplemenationObj
     if(myTurn):
         # get move from implementation
+        x , y , captured = ImplemenationObj.my_move(200)
         # get move or game is finished and i get who won , my score , his score
         gameEnd = False
-        iWon = True
+        countCaptured = len(captured)
         ourScore =10
         theirScore= 113
-        captured = [[1,3] , [2,4]] # array or arrays containing x, y to be removed
-        countCaptured = len(captured)
-        # convert it to x , y   , color
-        x , y  = 0 , 0 # get them from implementation
-        x = int(input("x")) # remove this 
-        y = int(input("y"))# remove this
-        import pdb; pdb.set_trace()
+        if(ImplemenationObj.game_end()):
+            gameEnd=True
+            blackScore , whiteScore =ImplemenationObj.get_score()
+            if(myColor =='b'):
+               
+                ourScore =blackScore
+                theirScore= whiteScore
+            else:
+                ourScore =whiteScore
+                theirScore= blackScore
+        iWon = True if (ourScore>=theirScore) else False
+
         if(not gameEnd):
             move = {'color':myColor , 'x':x , 'y':y , 'countCaptured':countCaptured }
             sendMsg(guiSocket, move, ScoketmsgTypes.move.value)
@@ -292,21 +313,30 @@ def playGame(myColor , myTurn,guiSocket ):
         elif(msg["type"] == ScoketmsgTypes.move.value):
             color,x,y = msg["msg"]["color"], msg["msg"]["x"],msg["msg"]["y"]
             # send move to implementation and wait if it's valid or not
+            valid , captured =ImplemenationObj.opponent_move(x , y , 200)
             # and if it's valid it may end the game
-            valid = True
             gameEnd = False
-            iWon = True
             ourScore =10
             theirScore= 10
-            reason = "shit is real"
-            import pdb; pdb.set_trace()
+            if(valid):
+                if(ImplemenationObj.game_end()):
+                    gameEnd=True
+                    blackScore , whiteScore =ImplemenationObj.get_score()
+                    if(myColor =='b'):
+                    
+                        ourScore =blackScore
+                        theirScore= whiteScore
+                    else:
+                        ourScore =whiteScore
+                        theirScore= blackScore
+            iWon = True if (ourScore>=theirScore) else False
+            reason = "not Valid"
             if(gameEnd):
                 end = {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
                 sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
                 return not gameEnd ,not myTurn
             else:
                 # get captured stones locations if there are ones
-                captured = [[1,3] , [5,6]] # array or arrays containing x, y to be removed
                 countCaptured = len(captured)
                 # reason contain reason if invalid or good or bad if valid with the good move
                 end =  {'valid':valid , 'reason':reason , 'countCaptured':countCaptured }
@@ -333,6 +363,7 @@ def recMsg(mySocket,aiVsAi):
 
 def communicatoinRec(communicationObj , myColor , guiSocket): 
     msg = communicationObj.recv()
+    print("communication rec" , msg)
     gamePaused = False
     gameEnd = False
     # some processing if msg is end 
@@ -379,11 +410,11 @@ def processInitialState(initialState , myColor):
     myPrisoners  = initialState['players'][myIndex]['prisoners']
     hisPrisoners = initialState['players'][hisIndex]['prisoners']
     board = np.array(board)
-    board[board == myIndex]= 1
-    board[board == hisIndex]= -1
-    board[np.multiply(board != hisIndex,board != myIndex)]= 0
-
-    return board , myRemainingTime , myPrisoners, hisRemainingTime,hisPrisoners , turn
+    newBoard = np.zeros_like(board, dtype=np.int32)
+    newBoard[board == myIndex]= 1
+    newBoard[board == hisIndex]= -1
+    
+    return newBoard , myRemainingTime , myPrisoners, hisRemainingTime,hisPrisoners , turn
 
 def processMoveLog(moveLog , myColor , turn , myRemainingTime ,hisRemainingTime):
     newMoveLog =[]
