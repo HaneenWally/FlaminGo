@@ -26,7 +26,7 @@ public:
 
 	Node(State&, Node*);
 	~Node();
-	Node* expand();                                 //adding a single child to this Node
+	Node* expand(CellState);                                 //adding a single child to this Node
 	void update(Result);
 	//--------------
 
