@@ -1,2 +1,2 @@
-Integration/build/*
+Integration/build/temp*
 .vscode/settings.json
