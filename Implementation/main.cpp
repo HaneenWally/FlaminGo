@@ -75,6 +75,7 @@ void change_borad(int x,int y,int turn){
     engine.applyAction(state, prev_state.get_color() == CellState::EMPTY ? NULL:&prev_state, action);
     prev_state = old_state;
     cout << state << endl;
+    if(!action.isPass()) empty_cells--;
     
 }
 
@@ -82,17 +83,18 @@ extern "C"
 void make_move(int* X,int* Y, int remaining_time){ 
     best_x = best_y = ACK;
     // If the last move for the opponent is "pass" and AI_AGENT is winning now, then no need for MCTS.
+    prev_action = current;
     if(prev_action.isPass() && is_winner(color[positive], engine.computeScore(state)) ){
         best_x = best_y = -1;
     }
     else{
         MCTS MC;
         // puts("running MCTS..");
-        int time_limit = remaining_time / (empty_cells/2);
+        int time_limit = remaining_time / (empty_cells/2 + 1);  // TODO: Divid by zero.
         Action act = MC.run(state,1, time_limit*1000, color[positive]);
         best_x = act.p.x; best_y = act.p.y;
     }
-    empty_cells--;
+    
     X[0] = best_x; Y[0] = best_y;
     change_borad(best_x,best_y,positive);
     int idx = 1; // should start from 1.
@@ -114,7 +116,6 @@ extern "C"
 int opponent_move(int* X,int* Y,int remaining_time){
     // the following line is useless IN CASE we r dealing with AI vs AI. but it's important in AI vs HUMAN.
     if(!valid(X[0],Y[0])) return 0;
-    empty_cells--;
     change_borad(X[0],Y[0],!positive);
     int idx = 0;
     for(Point p:state.last_captured_positions)
