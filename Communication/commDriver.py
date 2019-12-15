@@ -2,6 +2,7 @@ import multiprocessing
 from client import Client
 from serverInterface import ServerInterface
 from gameEngineInterface import *
+import asyncio
 
 
 class CommunicationDriver:
@@ -22,11 +23,8 @@ class CommunicationDriver:
         return self.gameEngineInterface.fromClient()
 
     def __del__(self):
-        del self.gameEngineInterface
-        del self.serverInterface
-        del self.client
         try:
-            self.clientProcess.join()
+            self.clientProcess.terminate()
         except:
             pass
 
