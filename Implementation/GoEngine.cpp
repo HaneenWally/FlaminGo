@@ -371,7 +371,11 @@ void GoEngine::applyValidAction(State& state, Action action){
 	state.last_captured_positions.clear();
 	state += action; // place the stone on the board
 	state.set_color(Switch(state.get_color())); // toggle the color of the player who will play
-	removeCaptured(state, action.p, action.getColour());
+	int numCaptured = removeCaptured(state, action.p, action.getColour());
+	auto cs = state.getCapturedstones();
+	auto capturedColor = Switch(action.getColour());
+	state.setCapturedStones(cs.white + capturedColor == WHITE ? numCaptured : 0, cs.black + capturedColor == BLACK ? numCaptured : 0);
+	state.actionMakeState = action;
 }
 
 bool GoEngine::applyAction(State& state, const State * prevState, Action action){
