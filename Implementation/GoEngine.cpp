@@ -385,5 +385,18 @@ GoEngine::~GoEngine()
 }
 
 
+vector<Point> GoEngine::getEmptyCells(const State& state){
+	vector<Point> emptyCells;
+	for (int i = 0; i < BOARD_DIMENSION; i++)
+	{
+		for (int j = 0; j < BOARD_DIMENSION; j++)
+		{
+			if(state(i,j) == EMPTY)
+				emptyCells.push_back(Point(i, j));
+		}
+	}
+	return emptyCells;
+}
+
 // we will need class tracker as a wrapper for that class
 // we may add function isDead() for that plays which is legal but can be ignored played as it is not worthy

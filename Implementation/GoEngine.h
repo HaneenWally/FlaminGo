@@ -51,7 +51,7 @@ public:
 
 
 	// bool processMove(State& currentState, const State& prevState, Move currentMove) const; // return the new state in the currentState
-
+	vector<Point> getEmptyCells(const State& state);
 
 	// destructor
 	~GoEngine();
