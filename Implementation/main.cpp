@@ -82,6 +82,8 @@ extern "C"
 void make_move(int* X,int* Y, int remaining_time){ 
     best_x = best_y = ACK;
     // If the last move for the opponent is "pass" and AI_AGENT is winning now, then no need for MCTS.
+    //cout<<prev_action<<endl;
+    prev_action = current;
     if(prev_action.isPass() && is_winner(color[positive], engine.computeScore(state)) ){
         best_x = best_y = -1;
     }
@@ -124,7 +126,7 @@ int opponent_move(int* X,int* Y,int remaining_time){
 }
 
 extern "C"
-int AI_score(int black){
+float AI_score(int black){
     Score sc = engine.computeScore(state);
     if(black) return sc.black;
     return sc.white;
