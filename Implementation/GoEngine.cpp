@@ -140,9 +140,9 @@ bool GoEngine::isValidMove_stateUpdated(State, State const&, Action) {
 
 bool GoEngine::isValidMove(State state, const State& prevState, Action move) {
 	// occupied point
+	if (move.isPass()) return true;
 	if (state(pxy(move)) != int(CellState::EMPTY)) return false;
 	if (!isOnBoard(move.p)) return false;
-	if (move.isPass()) return true;
 	state = state + move;
 	//std::cout << "state after placing move " << state(12, 0) << '\n';
 	int numCaptured = removeCaptured(state, move.p, move.getColour());

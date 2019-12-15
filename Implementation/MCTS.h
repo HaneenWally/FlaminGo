@@ -6,6 +6,7 @@
 #include "State.h"
 #include "Action.h"
 #include <vector>
+#include <map>
 
 #include "GoEngine.h"
 
@@ -17,6 +18,10 @@ private:
 	int iterations;
 	float Policy(Node*, Node*);  //the policy of calculating the score of node.
 	static GoEngine engine;
+
+	//Rave part
+	int k;
+	map<Action, pair<int, int>> rave;
 
 	// helpers
 	bool get_random_action(Action&);        // return false if no action found.
@@ -31,7 +36,7 @@ public:
 	const LoopTimer& get_timer() const;
 	int get_iterations() const;
 	Node* get_best_child(Node*, float);
-	Node* get_most_visited_child(Node*);
+	vector<Node*> get_most_visited_child(Node*);
 	Node* Select(Node*);
 	Node* Expand(Node*, CellState);
 	Result Simulate(State, State, Action, Action, CellState);

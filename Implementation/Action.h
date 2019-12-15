@@ -19,6 +19,11 @@ public:
 	Point getMove() const;
 	CellState getColour() const;
 	bool isPass() const;
+	bool operator<(const Action& x) const
+	{
+		if(x.p.x == p.x) return p.y < x.p.y;
+		return p.x < x.p.x;
+	}
     friend ostream& operator<<(ostream& os, const Action& action);
 
 	~Action();
