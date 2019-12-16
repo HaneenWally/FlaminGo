@@ -6,7 +6,7 @@ MCTS::MCTS()
 {
 	iterations = 0;
 	UCB1_C = sqrt(2);
-	max_iterations = 1000;
+	max_iterations = 10000;
 	max_millis = 1 * 1000;  // MUST BE CHANGED.
 	simulation_depth = 200;
 	k = 100;
@@ -40,7 +40,7 @@ float MCTS::Policy(Node* node, Node* child)
 	}
 	catch(...)
 	{
-		cout << "We find the error";
+		// cout << "We find the error";
 		assert("we find the error");
 	}
 	
@@ -186,7 +186,7 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 			// puts("IsGoal done 4");
 
 				if (isEmpty){
-					cout << "What the hell\n";
+					// cout << "What the hell\n";
 					break;
 				}
 
@@ -208,7 +208,7 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 			}
 			else
 			{
-				cout << "ezay ba2a ?!!\n";
+				// cout << "ezay ba2a ?!!\n";
 				break;
 				// avail = engine.getEmptyCells(state);
 			}
@@ -320,7 +320,7 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 
 		//cout << "simulation number " << iterations << " done.\n";
 	}
-	cout << "From Carloh: " << iterations << endl;
+	// cout << "From Carloh: " << iterations << endl;
 	// Return the action to the best node
 	if (best_nodes.size())
 	{

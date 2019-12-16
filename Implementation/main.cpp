@@ -43,6 +43,7 @@ void reach_initial(int* X,int* Y,int cur){
     // cur = 1 if the first man to play is black.
     int idx = 0, x, y;
     current_color = cur;
+    state.set_color(color[!cur]);
     State old_state;
     while(X[idx] != ACK){
         Point p(X[idx],Y[idx]);
@@ -74,7 +75,7 @@ void change_borad(int x,int y,int turn){
     old_state = state;
     engine.applyAction(state, prev_state.get_color() == CellState::EMPTY ? NULL:&prev_state, action);
     prev_state = old_state;
-    cout << state << endl;
+    // cout << state << endl;
     if(!action.isPass()) empty_cells--;
     
 }
@@ -92,7 +93,10 @@ void make_move(int* X,int* Y, int remaining_time){
         MCTS MC;
         // puts("running MCTS..");
         int time_limit = remaining_time / (empty_cells/2 + 1);  // TODO: Divid by zero.
-        Action act = MC.run(state,1, time_limit*1000, color[positive]);
+        // cout << state.get_color() << endl;
+
+        Action act = MC.run(state,1, 3*1000, color[positive]);
+        puts("--");
         best_x = act.p.x; best_y = act.p.y;
     }
     

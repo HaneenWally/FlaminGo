@@ -80,5 +80,5 @@ with open(filename, "w") as f:
         score = get_score()
         f.writelines(lines+[f'white {score[0]}\n', f'black {score[1]}'])
     except Exception as e:
-        print(filename + " has a problem")
+        # print(filename + " has a problem")
         f.writelines(lines+[str(e)])

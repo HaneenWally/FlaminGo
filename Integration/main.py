@@ -37,12 +37,12 @@ def main():
     paused = False
     msg= ""
     while (True):
-        print(msg)
+        # print(msg)
         if(not paused):
             msg =recMsg(guiConnection , False)
         if(msg["type"] == ScoketmsgTypes.AI_VS_AI.value ):
             paused = aiVsAi(msg , guiConnection , paused)
-            print(paused)
+            # print(paused)
         elif(msg["type"] == ScoketmsgTypes.AI_VSHuman.value ):
             aiVsHuman(msg , guiConnection)
 
@@ -54,40 +54,27 @@ def aiVsAi(msg , guiSocket , paused):
     port = msg["msg"]["port"]
     # send to communication team ip and port to connect to server
     if(not paused):
-        print("iam paused")
+        # print("iam paused")
         communicationObj = CommunicationDriver("Flamingo" ,ip+":"+port)   
         communicationObj.start()
     # get initialboard and history and my color
-    print("waiting to continue")
-    commMsg ,_ ,_ = communicatoinRec(communicationObj , None , guiSocket)
+    # print("waiting to continue")
+    commMsg ,_ ,_ = communicatoinRec( None , guiSocket)
     gameConfigration = commMsg['configuration']
     myTurn = commMsg["myturn"]
     myColor = commMsg['color'].lower()
     moveLog , board , myRemainingTime ,hisRemainingTime , myPrisoners, hisPrisoners= processGameConfigration(gameConfigration , myColor ,myTurn )
-    print(moveLog)
-    print(board)
-    print(myRemainingTime)
-    print(hisRemainingTime)
-    print(myPrisoners)
-    print(hisPrisoners)
-    print(myTurn)
-    print(myColor)
     #send moveLog and board to implementation and get stones to get remove from state and current state
     
     implColor = 1 if (myColor == 'b') else 0
     number_of_w_captures = myPrisoners if (myColor == "w") else hisPrisoners
     number_of_b_captures = myPrisoners if (myColor == "b") else hisPrisoners
     ImplemenationObj.fill_init_board(board ,implColor ,number_of_w_captures ,number_of_b_captures )
-    if(len(moveLog)):
-        board = ImplemenationObj.fill_init_log(moveLog)
+    board = ImplemenationObj.fill_init_log(moveLog , gameConfigration['initialState']['turn'].lower())
 
     ########## after geting last board
     hisColor = 'w' if myColor == 'b' else 'b'
     initialBoardHistory = []
-
-    #for i in moveLog:
-     #    initialBoardHistory.append({"x":i[0] , "y":i[1] , "color":i[2]})
-    #remove ubove and undo this
 
     for i in range(board.shape[0]):
         for j in range(board.shape[1]):
@@ -101,22 +88,22 @@ def aiVsAi(msg , guiSocket , paused):
     moveCount = len(initialBoardHistory)
 
     if(paused):
-        ackMsg = {'initialBoard':boolInitialBoard,"theirRemainingTime":hisRemainingTime , "ourRemainingTime":myRemainingTime , "initialCount":moveCount}
-        print("send to gui ")
-        print(ackMsg)
+        ackMsg = {'initialBoard':boolInitialBoard,"theirRemainingTime":hisRemainingTime , "ourRemainingTime":myRemainingTime , "initialCount":moveCount , "myTurn":myTurn}
+        # print("send to gui ")
+        # print(ackMsg)
         sendMsg(guiSocket, ackMsg, ScoketmsgTypes.gameStart.value)
         msg = recMsg(guiSocket, True)
     else:
-        ackMsg = {'initialBoard':boolInitialBoard,"theirRemainingTime":hisRemainingTime , "ourRemainingTime":myRemainingTime , "initialCount":moveCount}
-        print("send to gui ")
-        print(ackMsg)
+        ackMsg = {'initialBoard':boolInitialBoard,"theirRemainingTime":hisRemainingTime , "ourRemainingTime":myRemainingTime , "initialCount":moveCount , "myTurn":myTurn}
+        # print("send to gui")
+        # print(ackMsg)
         sendMsg(guiSocket, ackMsg, ScoketmsgTypes.AckAI_VS_AI.value)
         msg = recMsg(guiSocket, True)
 
     for i in range(moveCount):
         move = initialBoardHistory[i]
-        print("send to gui ")
-        print(move)
+        # print("send to gui")
+        # print(move)
         sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
         msg = recMsg(guiSocket , True)
      
@@ -124,14 +111,16 @@ def aiVsAi(msg , guiSocket , paused):
     continuePlaying = True
     gamePaused = False
     playOnlineGame.remaningTime = myRemainingTime
+    playOnlineGame.ourTimer = myRemainingTime
+    playOnlineGame.theirTimer = hisRemainingTime
     while(continuePlaying):
-        continuePlaying , gamePaused = playOnlineGame(myColor , myTurn , guiSocket , communicationObj )
+        continuePlaying , gamePaused = playOnlineGame(myColor , myTurn , guiSocket)
         myTurn = not myTurn
     return gamePaused
 
 
-def playOnlineGame(myColor , myTurn , guiSocket , communicationObj ):
-    
+def playOnlineGame(myColor , myTurn , guiSocket  ):
+    global communicationObj
     global ImplemenationObj
     hisColor = 'w' if myColor == 'b' else 'b'
     if(myTurn):
@@ -150,21 +139,29 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj ):
                 toComm = {"type":"MOVE" , "move":{"type":"pass"}}
             else:
                 toComm = {"type":"MOVE" , "move":{"type":"place" , "point":point}}
-            print(toComm)
+            # print(toComm)
             communicationObj.send(toComm)
-            msg , gamePaused , gameEnd = communicatoinRec(communicationObj , myColor , guiSocket)
+            msg , gamePaused , gameEnd = communicatoinRec( myColor , guiSocket)
             if(gamePaused):
                 return False , gamePaused
             if(gameEnd):
                 return False , False
             if(msg["type"]=="VALID"):
+                if(myColor == 'b'):
+                    playOnlineGame.ourTimer,  playOnlineGame.theirTimer=msg["remainingTime"]['B'] , msg["remainingTime"]['W']
+                else:
+                    playOnlineGame.ourTimer,  playOnlineGame.theirTimer=msg["remainingTime"]['W'] , msg["remainingTime"]['B']
                 break
-
+        
         #get captured from implementation and send them to gui too
         if(not gameEnd):
-            move = {'color':myColor , 'x':x , 'y':y , 'countCaptured':countCaptured }
-            print("send to gui ")
-            print(move)
+            if(myColor == 'b'):
+                ourScore , theirScore = ImplemenationObj.get_score()
+            else:
+                theirScore , ourScore = ImplemenationObj.get_score() 
+            move = {'color':myColor , 'x':x , 'y':y , 'countCaptured':countCaptured , "ourScore":ourScore, "theirScore":theirScore  , "ourTimer":playOnlineGame.ourTimer , "theirTimer":playOnlineGame.theirTimer}
+            # print("send to gui ")
+            # print(move)
             sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
             msg = recMsg(guiSocket , True)
             for i in range(countCaptured):
@@ -177,16 +174,17 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj ):
             end =  {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
             sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
             msg = recMsg(guiSocket , True)
+            del communicationObj
             return not gameEnd , False
 
     else:
         # get move from communication or get that game is paused duo to other player problem
-        move , gamePaused , gameEnd = communicatoinRec(communicationObj , myColor , guiSocket)
+        move , gamePaused , gameEnd = communicatoinRec(myColor , guiSocket)
         if(gamePaused):
             return False , gamePaused
         if(gameEnd):
             return False , False
-        print(move)
+        # print(move)
         playOnlineGame.remaningTime = move['remainingTime']['B']/1000 if(myColor == "b") else   move['remainingTime']['W']/1000
         moveType = move['move']['type']
         if(moveType == "pass"):
@@ -194,7 +192,7 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj ):
         elif(moveType == "place"):
             x , y = move['move']['point']['row'] ,move['move']['point']['column']
         elif(moveType =="resign"):
-            move , gamePaused , gameEnd = communicatoinRec(communicationObj , myColor , guiSocket)
+            move , gamePaused , gameEnd = communicatoinRec( myColor , guiSocket)
             return False , False
 
         # give move to implementation
@@ -210,13 +208,23 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj ):
             end = {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
             sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
             _ = recMsg(guiSocket, True)
+            del communicationObj
             return not gameEnd ,False
         else:
             # get captured stones locations if there are ones 
+            if(myColor == 'b'):
+                ourScore , theirScore = ImplemenationObj.get_score()
+            else:
+                theirScore , ourScore = ImplemenationObj.get_score() 
             countCaptured = len(captured)
-            move = {'color':hisColor , 'x':x , 'y':y , 'countCaptured':countCaptured }
-            print("send to gui ")
-            print(move)
+            if(myColor == 'b'):
+                playOnlineGame.ourTimer,  playOnlineGame.theirTimer=move["remainingTime"]['B'] , move["remainingTime"]['W']
+            else:
+                playOnlineGame.ourTimer,  playOnlineGame.theirTimer=move["remainingTime"]['W'] , move["remainingTime"]['B']
+            # print("loook here" , playOnlineGame.ourTimer,  playOnlineGame.theirTimer)
+            move = {'color':hisColor , 'x':x , 'y':y , 'countCaptured':countCaptured, "ourScore":ourScore, "theirScore":theirScore ,"ourTimer":playOnlineGame.ourTimer , "theirTimer":playOnlineGame.theirTimer}
+            # print("send to gui ")
+            # print(move)
             sendMsg(guiSocket, move, ScoketmsgTypes.moveConfigrations.value)
             msg = recMsg(guiSocket ,True)
             for i in range(countCaptured):
@@ -228,10 +236,10 @@ def playOnlineGame(myColor , myTurn , guiSocket , communicationObj ):
 
 def aiVsHuman(msg , guiSocket):
     global ImplemenationObj
-    print("i am here")
+    # print("i am here")
     ackMsg = {'ack':'ack'}
     sendMsg(guiSocket, ackMsg, ScoketmsgTypes.ackIgnore.value)
-    print("i am here")
+    # print("i am here")
     myColor= msg["msg"]["myColor"]
     # maybe process on mycolor if they want it 0 or 1
     # send color to implementation team
@@ -251,7 +259,7 @@ def aiVsHuman(msg , guiSocket):
             else:
                 board[x][y] = -1
         else:
-            print("wrong values from gui")
+            # print("wrong values from gui")
         sendMsg(guiSocket, ackMsg, ScoketmsgTypes.ackIgnore.value)
     whoPlayFirst= 'b'
     if(blackCount>whiteCount):
@@ -264,7 +272,7 @@ def aiVsHuman(msg , guiSocket):
     continuePlaying = True
     while(continuePlaying):
         continuePlaying , myTurn = playGame(myColor , myTurn , guiSocket)
-    print("i am out")
+    # print("i am out")
 
 
 def playGame(myColor , myTurn,guiSocket ):
@@ -288,9 +296,13 @@ def playGame(myColor , myTurn,guiSocket ):
                 ourScore =whiteScore
                 theirScore= blackScore
         iWon = True if (ourScore>=theirScore) else False
-
+        if(myColor == 'b'):
+            ourScore , theirScore = ImplemenationObj.get_score() 
+        else:
+            theirScore , ourScore = ImplemenationObj.get_score()
+        
         if(not gameEnd):
-            move = {'color':myColor , 'x':x , 'y':y , 'countCaptured':countCaptured }
+            move = {'color':myColor , 'x':x , 'y':y , 'countCaptured':countCaptured  , "ourScore":theirScore, "theirScore":ourScore}
             sendMsg(guiSocket, move, ScoketmsgTypes.move.value)
             msg = recMsg(guiSocket , False)
             for i in range(countCaptured):
@@ -299,7 +311,7 @@ def playGame(myColor , myTurn,guiSocket ):
                     msg = recMsg(guiSocket ,False)
             return not gameEnd , not myTurn
         else:
-            end =  {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
+            end =  {'win':(not iWon) , 'ourScore':theirScore , 'theirScore':ourScore}
             sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
             msg = recMsg(guiSocket , False)
             return not gameEnd , not myTurn
@@ -330,16 +342,26 @@ def playGame(myColor , myTurn,guiSocket ):
                         ourScore =whiteScore
                         theirScore= blackScore
             iWon = True if (ourScore>=theirScore) else False
-            reason = "not Valid"
+            
             if(gameEnd):
-                end = {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
+                end = {'win':(not iWon) , 'ourScore':theirScore , 'theirScore':ourScore}
                 sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
                 return not gameEnd ,not myTurn
             else:
                 # get captured stones locations if there are ones
                 countCaptured = len(captured)
                 # reason contain reason if invalid or good or bad if valid with the good move
-                end =  {'valid':valid , 'reason':reason , 'countCaptured':countCaptured }
+                if(valid):
+                    reason = ""
+                    if(myColor == 'b'):
+                        ourScore , theirScore = ImplemenationObj.get_score()
+                    else:
+                        theirScore , ourScore = ImplemenationObj.get_score() 
+                else:
+                    reason = "not Valid"
+                    ourScore = 0
+                    theirScore = 0
+                end =  {'valid':valid , 'reason':reason , 'countCaptured':countCaptured ,'ourScore':theirScore , 'theirScore':ourScore}
                 sendMsg(guiSocket, end, ScoketmsgTypes.ack.value)
                 msg = recMsg(guiSocket ,False)
                 if(valid):
@@ -352,7 +374,7 @@ def playGame(myColor , myTurn,guiSocket ):
 
 def recMsg(mySocket,aiVsAi):
     msg =  json.loads(mySocket.recv(4096).decode())
-    print(msg)
+    # print(msg)
     if(msg["type"] == ScoketmsgTypes.exit.value):
         #end implementation
         if(aiVsAi):
@@ -361,9 +383,10 @@ def recMsg(mySocket,aiVsAi):
         exit()
     return msg
 
-def communicatoinRec(communicationObj , myColor , guiSocket): 
+def communicatoinRec(myColor , guiSocket): 
+    global communicationObj
     msg = communicationObj.recv()
-    print("communication rec" , msg)
+    # print("communication rec" , msg)
     gamePaused = False
     gameEnd = False
     # some processing if msg is end 
@@ -390,8 +413,9 @@ def communicatoinRec(communicationObj , myColor , guiSocket):
                 theirScore = wScore
             if(winner.lower() != myColor):
                 iWon = False
-            print(gameEnd)
-            print(iWon , ourScore , theirScore )
+            del communicationObj
+            # print(gameEnd)
+            # print(iWon , ourScore , theirScore )
             end =  {'win':iWon , 'ourScore':ourScore , 'theirScore':theirScore}
             sendMsg(guiSocket, end, ScoketmsgTypes.gameEnd.value)
             msg = recMsg(guiSocket , True)

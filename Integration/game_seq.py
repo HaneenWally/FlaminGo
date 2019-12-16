@@ -24,7 +24,7 @@ class ImplemenationWrapper():
         self.impLib.opponent_move.restype = ctypes.c_int 
         
         self.impLib.AI_score.argtypes = [ctypes.c_int]
-        self.impLib.AI_score.restype = ctypes.c_int 
+        self.impLib.AI_score.restype = ctypes.c_float
 
         self.impLib.make_move.argtypes = [np.ctypeslib.ndpointer(dtype=np.int32), 
                                     np.ctypeslib.ndpointer(dtype=np.int32), 
@@ -68,7 +68,7 @@ class ImplemenationWrapper():
         self.impLib.set_color(color)
         self.impLib.fill_initial(x,y, number_of_w_captures, number_of_b_captures)
         
-    def fill_init_log(self, logs): 
+    def fill_init_log(self, logs , color): 
         # the log in shape of array of x,y,color if the play is pass the x,y == -1, -1
         x_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
         y_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
@@ -80,7 +80,8 @@ class ImplemenationWrapper():
         for i, (x,y,_) in enumerate(logs): x_list[i], y_list[i] = x,y
         x_list[len(logs)] = self.ACK; y_list[len(logs)] = self.ACK
         # color of the first player of the log, if black = 1
-        self.impLib.reach_initial(x_list, y_list, int(bool(logs[0][2] == 'b')))
+        #print("implementation color " ,int(bool(logs[0][2] == 'b')))
+        self.impLib.reach_initial(x_list, y_list, int(color =='b'))
 
         board = np.zeros((19,19))
         for x, y in zip(x_list, y_list): 
@@ -100,12 +101,8 @@ class ImplemenationWrapper():
         x_list[0] = x; y_list[0] = y
         x_list[1] = self.ACK; y_list[1] = self.ACK
 
-        try:
-            is_valid = self.impLib.opponent_move(x_list, y_list, int(remaningTime))
-        except:
-            import pdb; pdb.set_trace()
-
-        
+        is_valid = self.impLib.opponent_move(x_list, y_list, int(remaningTime))
+      
         if is_valid:
             return int(is_valid), self.__get_captured(x_list, y_list)
         else:
@@ -120,10 +117,10 @@ class ImplemenationWrapper():
         y_list = np.zeros((self.boardSize+1)*(self.boardSize+1), dtype=np.int32)
         try:
             self.impLib.make_move(x_list, y_list, int(remaningTime))
-            if(int(x_list[0]) == -1 and  int(y_list[0]) ==-1):
-                import pdb; pdb.set_trace()
+            # if(int(x_list[0]) == -1 and  int(y_list[0]) ==-1):
+            #     import pdb; pdb.set_trace()
         except:
-            import pdb; pdb.set_trace()
+            return self.my_move(int(remaningTime))
             
         self.x, self.y = int(x_list[0]), int(y_list[0])
         self.captured = self.__get_captured(x_list[1:], y_list[1:])
@@ -142,7 +139,7 @@ class ImplemenationWrapper():
     def get_score(self):
         blackScore = self.impLib.AI_score(1)
         whiteScore = self.impLib.AI_score(0)
-        return int(blackScore), int(whiteScore)
+        return float(blackScore), float(whiteScore)
 
     def game_end(self):
         return int(self.impLib.is_done())

@@ -22,11 +22,8 @@ class CommunicationDriver:
         return self.gameEngineInterface.fromClient()
 
     def __del__(self):
-        del self.gameEngineInterface
-        del self.serverInterface
-        del self.client
         try:
-            self.clientProcess.join()
+            self.clientProcess.terminate()
         except:
             pass
 
@@ -40,13 +37,10 @@ if __name__ == '__main__':
     comm.start()
     print("Commmunication statrted")
     msg = comm.recv()
-
-    while(1):
-        if(msg["type"] != "END"):
-            # input("Press enter!!")
-            if(msg["myturn"]):
-                # a, b = input(f"{agentName} pick a move: ").split()
-                comm.send({"type": "MOVE", "move": {
-                    "type": "place", "point": {"row": randrange(0, 19), "column": randrange(0, 19)}}})
+    while(True):
+        comm.send({"type": "MOVE", "move": {"type": "pass", "point": {"row":-1, "column":-1}}})
         msg = comm.recv()
-        sleep(.5)
+        print(msg)
+        msg = comm.recv()
+        print(msg)
+    sleep(.5)
