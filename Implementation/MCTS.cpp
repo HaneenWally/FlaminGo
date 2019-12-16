@@ -24,6 +24,9 @@ float MCTS::Policy(Node* node, Node* child)
 	int action_wins = rave[a].first;
 	int action_simulations = rave[a].second;
 	
+	try
+	{
+		/* code */
 	float b = sqrt(k / (k+action_simulations));
 	float Qmc = (float)child->get_wins() / child->get_num_visits();
 	float Qrave = (float) action_wins / action_simulations;
@@ -33,8 +36,15 @@ float MCTS::Policy(Node* node, Node* child)
 	float ucb_exploration = sqrt(log(node->get_num_visits()) / child->get_num_visits());
 
 	float Qscore = Q + UCB1_C * ucb_exploration;
-	// float Qscore = exploitaion + UCB1_C * ucb_exploration;
 	return Qscore;
+	}
+	catch(...)
+	{
+		cout << "We find the error";
+		assert("we find the error");
+	}
+	
+	// float Qscore = exploitaion + UCB1_C * ucb_exploration;
 }
 
 // get best child for given node based on UCB score
@@ -130,7 +140,9 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 	// puts("Here");
 	srand(time(NULL));
 	State old_state;
-	vector<Point> avail = engine.getEmptyCells(state);
+	vector<Point> availWhite = engine.getEmptyCells(state);
+	vector<Point> availBlack = availWhite;
+	vector<Point>* avail;
 	// auto currentColor = AI_COLOR;
 	if (!engine.isGoal(state, action, prev_action))
 	{
@@ -142,23 +154,57 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 			{
 				break;
 			}
+
+			if(Switch(state.get_color()) == WHITE){
+				avail = &availWhite;
+			}
+			else{
+				avail = &availBlack;
+			}
 			// puts("IsGoal done 1");
 			
-			if (!avail.empty())
+			if (! avail->empty())
 			{
 				//// puts("IsGoal done 2");
+				int idx = rand() % avail->size();
+			// puts("IsGoal done 2");
+
+				action = Action(Switch(state.get_color()), (*avail)[idx]);
+				// action.player = Switch(state.get_color());
+				bool isEmpty = avail->empty();
+			// puts("IsGoal done 3");
+
+				while(!isEmpty && !engine.isValidMove(state, prev_state, action)){
+					swap((*avail)[idx],(*avail)[avail->size()-1]);
+					avail->pop_back();
+					isEmpty = avail->empty();
+					if (isEmpty) break;
+
+					idx = rand() % avail->size();
+					action = Action(Switch(state.get_color()), (*avail)[idx]);
+				}
+			// puts("IsGoal done 4");
+
+				if (isEmpty){
+					cout << "What the hell\n";
+					break;
+				}
+
+				swap((*avail)[idx],(*avail)[avail->size()-1]);
+				avail->pop_back();
+			// puts("IsGoal done 5");
+				
 				prev_action = action;
 				old_state = state;
-				int idx = rand()%avail.size();
-				action = Action(Switch(state.get_color()), avail[idx]);
 				// action.player = Switch(state.get_color());
-				swap(avail[idx],avail[avail.size()-1]);
-				avail.pop_back();
 				this->engine.applyValidAction(state, action);
 				for(auto pos:state.last_captured_positions){
-					avail.push_back(pos);
+					availWhite.push_back(pos);
+					availBlack.push_back(pos);
 				}
 				prev_state = old_state;
+			// puts("IsGoal done 6");
+
 			}
 			else
 			{
@@ -232,9 +278,11 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 		timer.loop_start();
 
 		// 1. SELECT
+		// puts("1");
 		Node* node = Select(&root_node);
         // puts("Node selected successfully.");
 		// 2. Expand
+		// puts("2");
 		node = Expand(node, AI_COLOR);
 		// puts("Node expanded successfully.");
 
@@ -249,16 +297,18 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 		// puts("para3");
 		Action pre_a = node->get_parent()->get_action();
 		// puts("para4");
+		// puts("3");
 		// 3. Simulate   // NOTE: the parent node will never = NULL, as the concept of expanding prevent that from happening.
 		Result reward = Simulate(state, par, a, pre_a, AI_COLOR);
 		// puts("Got the reward successfully.");
 		//if(explored_states) explored_states->push_back(state);
 
 		// 4. BACK PROPAGATION
+		// puts("4");
 		Propagate(node, reward, AI_COLOR);
 		// puts("Propagation is done successfully.");
 
-
+		// puts("5");
 		best_nodes = get_most_visited_child(&root_node);
 
 		timer.loop_end();

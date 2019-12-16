@@ -148,8 +148,8 @@ bool GoEngine::isValidMove(State state, const State& prevState, Action move) {
 	//std::cout << "state after placing move " << state(12, 0) << '\n';
 	int numCaptured = removeCaptured(state, move.p, move.getColour());
 	if (numCaptured > 0) {
-		std::cout << "numCaptured: " << numCaptured << "\n";
-		return !isKo(state, prevState);
+		// std::cout << "numCaptured: " << numCaptured << "\n";
+		return !isKo(state, prevState, move);
 	}
 	return !isSelfCapture(state, move.p, move.getColour()); // the state passed here is the state after move played
 }
@@ -159,26 +159,31 @@ bool GoEngine::isValidMove(const State* state, const State* prevState, Action mo
 	if (move.isPass()) return true;
 	if (!isOnBoard(move.p)) return false;
 	if ((*state)(pxy(move)) != int(CellState::EMPTY)) return false;
-	State newState(*state);
+	State newState(*state); // TODO 
 	newState += move;
 	//std::cout << "state after placing move " << (*state)(12, 0) << '\n';
 	int numCaptured = removeCaptured(newState, move.p, move.getColour());
 	if (numCaptured > 0) {
 		//std::cout << "numCaptured: " << numCaptured << "\n";
 		if (prevState == NULL) return true;
-		return !isKo(newState, *prevState);
+		return !isKo(newState, *prevState, move);
 	}
 	return !isSelfCapture(newState, move.p, move.getColour()); // the state passed here is the state after move played
 }
 
-bool GoEngine::isKo(const State& currentState, const State& prevState) {
-	for (int i = 0; i<BOARD_DIMENSION; i++) {
-		for (int j = 0; j<BOARD_DIMENSION; j++) {
-			if (currentState[i][j] != prevState[i][j])
-				return false;
-		}
-	}
-	return true;
+// take prev, current, new
+//		state  action   state
+bool GoEngine::isKo(const State& newState, const State& prevState, Action currentAction) {
+	if (prevState.last_captured_positions.size() != 1) return false;
+	bool playInCapturedPos = currentAction.p.x == prevState.last_captured_positions[0].x && currentAction.p.y == prevState.last_captured_positions[0].y;
+	return playInCapturedPos;
+	// for (int i = 0; i<BOARD_DIMENSION; i++) {
+	// 	for (int j = 0; j<BOARD_DIMENSION; j++) {
+	// 		if (currentState[i][j] != prevState[i][j])
+	// 			return false;
+	// 	}
+	// }
+	// return true;
 }
 
 bool GoEngine::isGoal(const State &currentState, Action currentMove, Action prevMove)
@@ -374,7 +379,9 @@ void GoEngine::applyValidAction(State& state, Action action){
 	int numCaptured = removeCaptured(state, action.p, action.getColour());
 	auto cs = state.getCapturedstones();
 	auto capturedColor = Switch(action.getColour());
-	state.setCapturedStones(cs.white + capturedColor == WHITE ? numCaptured : 0, cs.black + capturedColor == BLACK ? numCaptured : 0);
+
+	state.setCapturedStones(cs.white + (capturedColor == WHITE ? numCaptured : 0), cs.black + (capturedColor == BLACK ? numCaptured : 0) );
+	
 	state.actionMakeState = action;
 }
 

@@ -47,7 +47,7 @@ public:
 	// may be used
 	bool isSelfCapture(const State& state, Point point, CellState color);
 	int removeCaptured(State & state, Point point, CellState color); // take the player stone's color
-	bool isKo(const State& currentState, const State& prevState);
+	bool isKo(const State& currentState, const State& prevState, Action currentAction);
 
 
 	// bool processMove(State& currentState, const State& prevState, Move currentMove) const; // return the new state in the currentState
