@@ -4,13 +4,13 @@
 #include <stdlib.h>
 #include <time.h> 
 
-Node::Node(State& state, Node* parent = NULL) :
-	state(state),
+Node::Node(State& state_, Node* parent_ = NULL) :
+	state(state_),
 	action(),
-	parent(parent),
+	parent(parent_),
 	visits_count(0),
 	wins(0),
-	depth(parent ? parent->depth + 1 : 0)
+	depth(parent_ ? parent_->depth + 1 : 0)
 {}
 
 //All nodes share the same game engine.
