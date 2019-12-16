@@ -141,8 +141,9 @@ bool GoEngine::isValidMove_stateUpdated(State, State const&, Action) {
 bool GoEngine::isValidMove(State state, const State& prevState, Action move) {
 	// occupied point
 	if (move.isPass()) return true;
-	if (state(pxy(move)) != int(CellState::EMPTY)) return false;
 	if (!isOnBoard(move.p)) return false;
+	if (state(pxy(move)) != int(CellState::EMPTY)) return false;
+	
 	state = state + move;
 	//std::cout << "state after placing move " << state(12, 0) << '\n';
 	int numCaptured = removeCaptured(state, move.p, move.getColour());
@@ -156,8 +157,8 @@ bool GoEngine::isValidMove(State state, const State& prevState, Action move) {
 bool GoEngine::isValidMove(const State* state, const State* prevState, Action move) {
 	// occupied point
 	if (move.isPass()) return true;
-	if ((*state)(pxy(move)) != int(CellState::EMPTY)) return false;
 	if (!isOnBoard(move.p)) return false;
+	if ((*state)(pxy(move)) != int(CellState::EMPTY)) return false;
 	State newState(*state);
 	newState += move;
 	//std::cout << "state after placing move " << (*state)(12, 0) << '\n';
@@ -370,7 +371,11 @@ void GoEngine::applyValidAction(State& state, Action action){
 	state.last_captured_positions.clear();
 	state += action; // place the stone on the board
 	state.set_color(Switch(state.get_color())); // toggle the color of the player who will play
-	removeCaptured(state, action.p, action.getColour());
+	int numCaptured = removeCaptured(state, action.p, action.getColour());
+	auto cs = state.getCapturedstones();
+	auto capturedColor = Switch(action.getColour());
+	state.setCapturedStones(cs.white + capturedColor == WHITE ? numCaptured : 0, cs.black + capturedColor == BLACK ? numCaptured : 0);
+	state.actionMakeState = action;
 }
 
 bool GoEngine::applyAction(State& state, const State * prevState, Action action){
@@ -383,6 +388,19 @@ GoEngine::~GoEngine()
 {
 }
 
+
+vector<Point> GoEngine::getEmptyCells(const State& state){
+	vector<Point> emptyCells;
+	for (int i = 0; i < BOARD_DIMENSION; i++)
+	{
+		for (int j = 0; j < BOARD_DIMENSION; j++)
+		{
+			if(state(i,j) == EMPTY)
+				emptyCells.push_back(Point(i, j));
+		}
+	}
+	return emptyCells;
+}
 
 // we will need class tracker as a wrapper for that class
 // we may add function isDead() for that plays which is legal but can be ignored played as it is not worthy

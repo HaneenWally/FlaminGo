@@ -6,9 +6,9 @@ MCTS::MCTS()
 {
 	iterations = 0;
 	UCB1_C = sqrt(2);
-	max_iterations = 100;
+	max_iterations = 1000;
 	max_millis = 1 * 1000;  // MUST BE CHANGED.
-	simulation_depth = 100;
+	simulation_depth = 200;
 	k = 100;
 }
 GoEngine MCTS::engine = GoEngine();
@@ -20,17 +20,20 @@ int MCTS::get_iterations() const
 float MCTS::Policy(Node* node, Node* child)
 {
 	Action a = child->get_action();
-
+	
 	int action_wins = rave[a].first;
 	int action_simulations = rave[a].second;
+	
 	float b = sqrt(k / (k+action_simulations));
-
 	float Qmc = (float)child->get_wins() / child->get_num_visits();
 	float Qrave = (float) action_wins / action_simulations;
 	float Q = (1 - b) * Qmc + b*Qrave;
+
+	float exploitaion = (float)child->get_wins() / child->get_num_visits();
 	float ucb_exploration = sqrt(log(node->get_num_visits()) / child->get_num_visits());
 
 	float Qscore = Q + UCB1_C * ucb_exploration;
+	// float Qscore = exploitaion + UCB1_C * ucb_exploration;
 	return Qscore;
 }
 
@@ -125,8 +128,13 @@ Node* MCTS::Expand(Node* node, CellState AI_COLOR)
 Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_action, CellState AI_COLOR)
 {
 	// puts("Here");
+	srand(time(NULL));
+	State old_state;
+	vector<Point> avail = engine.getEmptyCells(state);
+	// auto currentColor = AI_COLOR;
 	if (!engine.isGoal(state, action, prev_action))
 	{
+		//engine.getRandomAction(action, &state, &prev_state,Switch(state.get_color()))
 		for (int d = 0; d < simulation_depth; ++d)
 		{
 			// puts("IsGoal done 0");
@@ -135,22 +143,34 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 				break;
 			}
 			// puts("IsGoal done 1");
-			prev_action = action;
-			if (engine.getRandomAction(action, &state, &prev_state,Switch(state.get_color()))) // TODO: interface correct and send missing params [DONE]
+			
+			if (!avail.empty())
 			{
-				// puts("IsGoal done 2");
+				//// puts("IsGoal done 2");
+				prev_action = action;
+				old_state = state;
+				int idx = rand()%avail.size();
+				action = Action(Switch(state.get_color()), avail[idx]);
+				// action.player = Switch(state.get_color());
+				swap(avail[idx],avail[avail.size()-1]);
+				avail.pop_back();
 				this->engine.applyValidAction(state, action);
-
+				for(auto pos:state.last_captured_positions){
+					avail.push_back(pos);
+				}
+				prev_state = old_state;
 			}
 			else
 			{
+				cout << "ezay ba2a ?!!\n";
 				break;
+				// avail = engine.getEmptyCells(state);
 			}
 			// puts("IsGoal done 3");
 		}
 	}
 	/*
-	//This Part is valid in case no actions = terminal state.
+	// This Part is valid in case no actions = terminal state.
 	int counter = simulation_depth;
 	while(!state.is_terminal() && counter-- )
 	{
@@ -162,6 +182,7 @@ Result MCTS::Simulate(State state,State prev_state, Action action, Action prev_a
 	Score score = engine.computeScore(state);
 	return ( is_winner(AI_COLOR, score) ? WIN:LOSE);
 	// return state.evalute();     // WIN or LOSE.
+	// OPTIMIZATION asdsbadjasb
 }
 
 //Back Propagation, Update the path of hte node
@@ -182,13 +203,15 @@ void MCTS::Propagate(Node* node, Result reward, CellState AI_COLOR)
 	{
 		reward = (reward == WIN ? LOSE : WIN); // Toggle the state.
 		node->update(reward);
-
+		
 		if(node->get_parent()){
 
 			Action a = node->get_action();
 			rave[a].first += action_win;
 			rave[a].second += 1;
+
 		}
+		
 
 		node = node->get_parent();
 	}
@@ -204,7 +227,6 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 
 	vector<Node*> best_nodes;
 	iterations = 0;
-
 	while (true)
 	{
 		timer.loop_start();
@@ -248,7 +270,7 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 
 		//cout << "simulation number " << iterations << " done.\n";
 	}
-
+	cout << "From Carloh: " << iterations << endl;
 	// Return the action to the best node
 	if (best_nodes.size())
 	{
@@ -257,7 +279,7 @@ Action MCTS::run(State& current_state, int seed, int time_limit, CellState AI_CO
 		{
 			return best_nodes.back()->get_action();
 		}
-	
+
 		return best_nodes[0]->get_action();
 	}
 

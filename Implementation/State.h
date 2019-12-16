@@ -14,6 +14,7 @@ private:
 	CellState color;		// NOTE: color in state means the color which make that state. not the color which is ready to play.
 							// NOTE: the color of the state is totally useless for MCTS. It's needed to communicate with the engine.
 public:
+	Action actionMakeState;
 	vector<Point>last_captured_positions;
 	CapturedStones getCapturedstones() const;
 	State(const Board & m, int capturedByBlack, int capturedByWhite);
