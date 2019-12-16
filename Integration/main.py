@@ -259,6 +259,7 @@ def aiVsHuman(msg , guiSocket):
             else:
                 board[x][y] = -1
         else:
+            pass
             # print("wrong values from gui")
         sendMsg(guiSocket, ackMsg, ScoketmsgTypes.ackIgnore.value)
     whoPlayFirst= 'b'
